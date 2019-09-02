@@ -1,0 +1,40 @@
+image: golang:1.11
+
+services:
+  - postgres:latest
+
+variables:
+  POSTGRES_DB: rentals-dev
+  POSTGRES_USER: juan
+  RENTALS_DB_NAME: $POSTGRES_DB
+  RENTALS_DB_USER: $POSTGRES_USER
+  RENTALS_DB_HOST: postgres
+
+stages:
+  - build
+  - test
+  - deploy
+
+build:
+  stage: build
+  script:
+    - go build ./...
+
+test:
+  stage: test
+  variables:
+    RENTALS_TESTING: yo
+  script:
+    - go test ./...
+
+deploy:
+  stage: deploy
+  only:
+    - master
+
+  script:
+    - apt-get update -qy
+    - apt-get install -y ruby-dev rubygems git
+    - gem install dpl
+    - echo "deploying"
+    - dpl --skip-cleanup --provider=heroku --app=trenlas --api-key=$API_KEY
