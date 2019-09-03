@@ -69,7 +69,7 @@ func (s *Server) newClientHandler() http.HandlerFunc {
 		user, err := s.userService.Create(savingDeposits.UserCreateInput{
 			Username: newClient.Username,
 			Password: newClient.Password,
-			Role:     "client",
+			Role:     "regular",
 		})
 
 		if err != nil {

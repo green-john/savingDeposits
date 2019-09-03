@@ -140,8 +140,8 @@ func TestCRUDUsers(t *testing.T) {
 				fmt.Sprintf("Expected id %d, got %d", usrRes.ID, retUser.ID))
 
 			// Update
-			payload = []byte(`{"id":100, "username": "newusr", "role": "realtor"}`)
-			res, err = tst.MakeRequest("PATCH", userUrl, token, payload)
+			updatePayload := []byte(`{"id":100, "username": "newusr", "role": "manager"}`)
+			res, err = tst.MakeRequest("PATCH", userUrl, token, updatePayload)
 			tst.Ok(t, err)
 			tst.True(t, res.StatusCode == http.StatusOK, fmt.Sprintf("Expected 200 got %d", res.StatusCode))
 			rawContent, err = ioutil.ReadAll(res.Body)
@@ -151,7 +151,7 @@ func TestCRUDUsers(t *testing.T) {
 			err = json.Unmarshal(rawContent, &updUser)
 			tst.True(t, updUser.Username == "john",
 				fmt.Sprintf("Expected name john, got %s", updUser.Username))
-			tst.True(t, updUser.Role == "realtor",
+			tst.True(t, updUser.Role == "manager",
 				fmt.Sprintf("Expected role realtor, got %s", updUser.Role))
 			tst.True(t, updUser.ID == usrRes.ID,
 				fmt.Sprintf("Expected id %d, got %d", usrRes.ID, updUser.ID))
@@ -176,11 +176,11 @@ func assertResponse(t *testing.T, data []byte, user, role string, checkId func(i
 	err := json.Unmarshal(data, &usrRes)
 	tst.Ok(t, err)
 
-	tst.True(t, usrRes.Username == "john",
-		fmt.Sprintf("Expected name john, got %s", usrRes.Username))
-	tst.True(t, usrRes.Role == "client",
-		fmt.Sprintf("Expected role client, got %s", usrRes.Role))
-	tst.True(t, usrRes.ID != 0, "Id must be different than 0")
+	tst.True(t, usrRes.Username == user,
+		fmt.Sprintf("Expected name %s, got %s", user, usrRes.Username))
+	tst.True(t, usrRes.Role == role,
+		fmt.Sprintf("Expected role %s, got %s", role, usrRes.Role))
+	tst.True(t, checkId(usrRes.ID), "Id didn't pass check")
 
 	return usrRes
 }
@@ -198,9 +198,9 @@ func TestFetchOwnUserData(t *testing.T) {
 
 	_, err := createUser("admin", "admin", "admin", srv.Db)
 	tst.Ok(t, err)
-	_, err = createUser("realtor", "realtor", "realtor", srv.Db)
+	_, err = createUser("manager", "manager", "manager", srv.Db)
 	tst.Ok(t, err)
-	_, err = createUser("client", "client", "client", srv.Db)
+	_, err = createUser("regular", "regular", "regular", srv.Db)
 	tst.Ok(t, err)
 
 	t.Run("Can't create user with same username", func(t *testing.T) {
@@ -218,8 +218,8 @@ func TestFetchOwnUserData(t *testing.T) {
 			fmt.Sprintf("Expected 401, got %d", res.StatusCode))
 	})
 
-	t.Run("Read own user data client, realtor, admin", func(t *testing.T) {
-		for _, user := range []string{"client", "realtor", "admin"} {
+	t.Run("Read own user data regular, manager and admin", func(t *testing.T) {
+		for _, user := range []string{"regular", "manager", "admin"} {
 			token, err := getUserToken(t, serverUrl, user, user)
 			tst.Ok(t, err)
 
@@ -270,7 +270,7 @@ func TestCreateClient(t *testing.T) {
 		err = decoder.Decode(&returnedUser)
 		tst.Ok(t, err)
 
-		assertUser(t, &returnedUser, "client1", "client")
+		assertUser(t, &returnedUser, "client1", "regular")
 	})
 }
 

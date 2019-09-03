@@ -9,21 +9,6 @@ import (
 	"strconv"
 )
 
-type Role int
-
-const (
-	REGULAR = iota
-	MANAGER
-	ADMIN
-)
-
-var allRoles = []Role{REGULAR, MANAGER, ADMIN}
-var stringRoles = []string{"regular", "manager", "admin"}
-
-func (r Role) String() string{
-	return stringRoles[r]
-}
-
 type dbUserService struct {
 	Db *gorm.DB
 }
@@ -139,7 +124,7 @@ func createUser(username, password, role string, db *gorm.DB) (*savingDeposits.U
 }
 
 func validRole(role string) bool {
-	for _, elt := range allRoles {
+	for _, elt := range savingDeposits.AllRoles {
 		if elt.String() == role {
 			return true
 		}

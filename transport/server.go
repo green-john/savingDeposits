@@ -44,7 +44,9 @@ func (s *Server) ServeHTTP(addr string) error {
 }
 
 func (s *Server) setupAuthorization() {
-	s.authz.AddPermission("admin", "users",
+	s.authz.AddPermission(savingDeposits.ADMIN, savingDeposits.USERS,
+		auth.Create, auth.Read, auth.Update, auth.Delete)
+	s.authz.AddPermission(savingDeposits.MANAGER, savingDeposits.USERS,
 		auth.Create, auth.Read, auth.Update, auth.Delete)
 	//s.authz.AddPermission("admin", "apartments",
 	//	auth.Create, auth.Read, auth.Update, auth.Delete)

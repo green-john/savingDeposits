@@ -5,6 +5,7 @@ import (
 	"github.com/gorilla/handlers"
 	"net/http"
 	"os"
+	"savingDeposits"
 	"savingDeposits/auth"
 	"strings"
 )
@@ -40,7 +41,9 @@ func (s *Server) AuthMiddleware(next http.Handler) http.Handler {
 		if requestedResource != "" {
 			op := getOp(r.Method)
 
-			if !s.authz.Allowed(user.Role, requestedResource, op) {
+			role := savingDeposits.RoleFromString(user.Role)
+			resource := savingDeposits.ResourceFromString(requestedResource)
+			if !s.authz.Allowed(role, resource, op) {
 				respond(w, http.StatusForbidden, "Not allowed")
 				return
 			}
@@ -77,13 +80,12 @@ func getOp(method string) auth.Permission {
 }
 
 func getResource(urlPath string) string {
-	urlMappings := map[string]string{
-		"/users":          "users",
-		"/savingDeposits": "savingDeposits",
+	if strings.HasPrefix(urlPath, "/users") {
+		return "users"
 	}
 
-	if resource, ok := urlMappings[urlPath]; ok {
-		return resource
+	if strings.HasPrefix(urlPath, "/savingDeposits") {
+		return "savingDeposits"
 	}
 
 	return ""

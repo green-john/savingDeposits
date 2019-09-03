@@ -1,5 +1,59 @@
 package savingDeposits
 
+type Role uint
+
+const (
+	REGULAR Role = iota
+	MANAGER
+	ADMIN
+)
+
+var AllRoles = []Role{REGULAR, MANAGER, ADMIN}
+var stringRoles = []string{"regular", "manager", "admin"}
+
+func (r Role) String() string {
+	return stringRoles[r]
+}
+
+func (r Role) Role() string {
+	return r.String()
+}
+
+type Resource uint
+
+const (
+	USERS Resource = iota
+)
+
+var AllResources = []Resource{USERS}
+var stringResources = []string{"users"}
+
+func (r Resource) String() string {
+	return stringRoles[r]
+}
+
+func (r Resource) Resource() string {
+	return r.String()
+}
+
+func ResourceFromString(s string) Resource {
+	m := map[string]Resource{
+		"users": USERS,
+	}
+
+	return m[s]
+}
+
+func RoleFromString(s string) Role {
+	m := map[string]Role{
+		"regular": REGULAR,
+		"manager": MANAGER,
+		"admin":   ADMIN,
+	}
+
+	return m[s]
+}
+
 type User struct {
 	// Primary key
 	ID uid `gorm:"primary_key" json:"id"`
