@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/jinzhu/gorm"
-	"rentals"
-	"rentals/crypto"
+	"savingDeposits"
+	"savingDeposits/crypto"
 )
 
 // Elements related to authentication and authorization.
@@ -29,7 +29,7 @@ type AuthnService interface {
 	// Verify checks whether or not the given token is valid.
 	// If it is, it returns the user associated to such token.
 	// Otherwise, returns nil.
-	Verify(token string) *rentals.User
+	Verify(token string) *savingDeposits.User
 }
 
 // Implementation of a AuthnService using a relational database
@@ -38,7 +38,7 @@ type dbAuthnService struct {
 }
 
 func (a *dbAuthnService) Login(username, password string) (string, error) {
-	var user rentals.User
+	var user savingDeposits.User
 	a.Db.Where("username = ?", username).First(&user)
 
 	// Username was not found as we don't allow empty passwords
@@ -58,7 +58,7 @@ func (a *dbAuthnService) Login(username, password string) (string, error) {
 
 	// Otherwise, create a new token and session and save it to the Db
 	token := generateToken()
-	session := rentals.UserSession{
+	session := savingDeposits.UserSession{
 		Token:  token,
 		UserID: uint(user.ID),
 		User:   user,
@@ -68,8 +68,8 @@ func (a *dbAuthnService) Login(username, password string) (string, error) {
 	return token, nil
 }
 
-func (a *dbAuthnService) findExistingUserSession(user rentals.User) *rentals.UserSession {
-	var session rentals.UserSession
+func (a *dbAuthnService) findExistingUserSession(user savingDeposits.User) *savingDeposits.UserSession {
+	var session savingDeposits.UserSession
 
 	a.Db.Where("user_id = ?", user.ID).First(&session)
 
@@ -95,15 +95,15 @@ func generateToken() string {
 	return fmt.Sprintf("%X", ret)
 }
 
-func (a *dbAuthnService) Verify(token string) *rentals.User {
-	var userSession rentals.UserSession
+func (a *dbAuthnService) Verify(token string) *savingDeposits.User {
+	var userSession savingDeposits.UserSession
 	a.Db.Where("token = ?", token).First(&userSession)
 
 	if userSession.Token != token {
 		return nil
 	}
 
-	var user rentals.User
+	var user savingDeposits.User
 	a.Db.Model(&userSession).Related(&user)
 
 	return &user

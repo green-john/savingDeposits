@@ -1,10 +1,10 @@
-# Rentals
+# Saving Deposits
 
-Manage rental properties
+Manage saving deposits
 
 ## Install
 
-You need Go 1.11+. First do 
+Go 1.11+
 
 ## Usage
 
@@ -15,9 +15,9 @@ requests to the server will fail.
 The server takes the database host, name and user from env variables, specifically:
 
 ```
-RENTALS_DB_HOST
-RENTALS_DB_NAME
-RENTALS_DB_USER
+SAVINGS_DB_HOST
+SAVINGS_DB_NAME
+SAVINGS_DB_USER
 ```
 
 Postgresql is used as a database. Make sure you `createdb` before starting the app.

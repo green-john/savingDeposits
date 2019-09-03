@@ -4,43 +4,57 @@ import (
 	"errors"
 	"fmt"
 	"github.com/jinzhu/gorm"
-	"rentals"
-	"rentals/crypto"
+	"savingDeposits"
+	"savingDeposits/crypto"
 	"strconv"
 )
 
+type Role int
+
+const (
+	REGULAR = iota
+	MANAGER
+	ADMIN
+)
+
+var allRoles = []Role{REGULAR, MANAGER, ADMIN}
+var stringRoles = []string{"regular", "manager", "admin"}
+
+func (r Role) String() string{
+	return stringRoles[r]
+}
 
 type dbUserService struct {
 	Db *gorm.DB
 }
 
-func (s *dbUserService) Create(input rentals.UserCreateInput) (*rentals.UserCreateOutput, error) {
+func (s *dbUserService) Create(input savingDeposits.UserCreateInput) (*savingDeposits.UserCreateOutput, error) {
 	user, err := createUser(input.Username, input.Password, input.Role, s.Db)
 	if err != nil {
 		return nil, err
 	}
-	return &rentals.UserCreateOutput{User: *user}, nil
+	return &savingDeposits.UserCreateOutput{User: *user}, nil
 }
 
-func (s *dbUserService) All(rentals.UserAllInput) (*rentals.UserAllOutput, error) {
-	var users []rentals.User
+func (s *dbUserService) All(savingDeposits.UserAllInput) (*savingDeposits.UserAllOutput, error) {
+	var users []savingDeposits.User
 	if err := s.Db.Find(&users).Error; err != nil {
 		return nil, err
 	}
 
-	return &rentals.UserAllOutput{Users: users}, nil
+	return &savingDeposits.UserAllOutput{Users: users}, nil
 }
 
-func (s *dbUserService) Read(input rentals.UserReadInput) (*rentals.UserReadOutput, error) {
+func (s *dbUserService) Read(input savingDeposits.UserReadInput) (*savingDeposits.UserReadOutput, error) {
 	user, err := getUser(input.Id, s.Db)
 	if err != nil {
 		return nil, err
 	}
 
-	return &rentals.UserReadOutput{User: *user}, nil
+	return &savingDeposits.UserReadOutput{User: *user}, nil
 }
 
-func (s *dbUserService) Update(input rentals.UserUpdateInput) (*rentals.UserUpdateOutput, error) {
+func (s *dbUserService) Update(input savingDeposits.UserUpdateInput) (*savingDeposits.UserUpdateOutput, error) {
 	user, err := getUser(input.Id, s.Db)
 	if err != nil {
 		return nil, err
@@ -62,10 +76,10 @@ func (s *dbUserService) Update(input rentals.UserUpdateInput) (*rentals.UserUpda
 		return nil, fmt.Errorf("[dbUserService.Update] error updating %v", err)
 	}
 
-	return &rentals.UserUpdateOutput{User: *user}, nil
+	return &savingDeposits.UserUpdateOutput{User: *user}, nil
 }
 
-func (s *dbUserService) Delete(input rentals.UserDeleteInput) (*rentals.UserDeleteOutput, error) {
+func (s *dbUserService) Delete(input savingDeposits.UserDeleteInput) (*savingDeposits.UserDeleteOutput, error) {
 	user, err := getUser(input.Id, s.Db)
 	if err != nil {
 		return nil, err
@@ -75,24 +89,24 @@ func (s *dbUserService) Delete(input rentals.UserDeleteInput) (*rentals.UserDele
 		return nil, err
 	}
 
-	return &rentals.UserDeleteOutput{}, nil
+	return &savingDeposits.UserDeleteOutput{}, nil
 }
 
 func NewDbUserService(db *gorm.DB) *dbUserService {
 	return &dbUserService{Db: db}
 }
 
-func getUser(id string, db *gorm.DB) (*rentals.User, error) {
+func getUser(id string, db *gorm.DB) (*savingDeposits.User, error) {
 	intId, err := strconv.Atoi(id)
 	if err != nil {
 		return nil, err
 	}
 
-	var user rentals.User
+	var user savingDeposits.User
 
 	if err = db.First(&user, intId).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, rentals.NotFoundError
+			return nil, savingDeposits.NotFoundError
 		}
 		return nil, err
 	}
@@ -100,7 +114,7 @@ func getUser(id string, db *gorm.DB) (*rentals.User, error) {
 	return &user, nil
 }
 
-func createUser(username, password, role string, db *gorm.DB) (*rentals.User, error) {
+func createUser(username, password, role string, db *gorm.DB) (*savingDeposits.User, error) {
 	if !validRole(role) {
 		return nil, errors.New(
 			fmt.Sprintf("error creating user. Unknown role %s", role))
@@ -111,7 +125,7 @@ func createUser(username, password, role string, db *gorm.DB) (*rentals.User, er
 		return nil, fmt.Errorf("error encrypting password %v", err)
 	}
 
-	user := rentals.User{
+	user := savingDeposits.User{
 		Username:     username,
 		PasswordHash: pwdHash,
 		Role:         role,
@@ -125,12 +139,8 @@ func createUser(username, password, role string, db *gorm.DB) (*rentals.User, er
 }
 
 func validRole(role string) bool {
-	return contains([]string{"admin", "realtor", "client"}, role)
-}
-
-func contains(a []string, b string) bool {
-	for _, elt := range a {
-		if elt == b {
+	for _, elt := range allRoles {
+		if elt.String() == role {
 			return true
 		}
 	}

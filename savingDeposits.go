@@ -1,4 +1,4 @@
-package rentals
+package savingDeposits
 
 //type Apartment struct {
 //	// Primary key

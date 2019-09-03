@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"rentals"
+	"savingDeposits"
 )
 
 func (s *Server) LoginHandler() http.HandlerFunc {
@@ -66,7 +66,7 @@ func (s *Server) newClientHandler() http.HandlerFunc {
 			return
 		}
 
-		user, err := s.userService.Create(rentals.UserCreateInput{
+		user, err := s.userService.Create(savingDeposits.UserCreateInput{
 			Username: newClient.Username,
 			Password: newClient.Password,
 			Role:     "client",

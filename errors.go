@@ -1,4 +1,4 @@
-package rentals
+package savingDeposits
 
 import "errors"
 

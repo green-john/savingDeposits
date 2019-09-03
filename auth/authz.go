@@ -9,6 +9,14 @@ const (
 	Delete
 )
 
+type Role interface {
+	Role() string
+}
+
+type Resource interface {
+	Resource() string
+}
+
 type AuthzService struct {
 	// This is a map of roles to permissions per resource
 	//
@@ -24,34 +32,34 @@ type AuthzService struct {
 	perm map[string]map[string][]Permission
 }
 
-func (a *AuthzService) AddPermission(role string, resource string, permissions ...Permission) {
-	if _, ok := a.perm[role]; !ok {
-		a.perm[role] = make(map[string][]Permission)
+func (a *AuthzService) AddPermission(role Role, resource Resource, permissions ...Permission) {
+	if _, ok := a.perm[role.Role()]; !ok {
+		a.perm[role.Role()] = make(map[string][]Permission)
 	}
 
-	if _, ok := a.perm[role][resource]; !ok {
-		a.perm[role][resource] = make([]Permission, 0)
+	if _, ok := a.perm[role.Role()][resource.Resource()]; !ok {
+		a.perm[role.Role()][resource.Resource()] = make([]Permission, 0)
 	}
 
 	for _, p := range permissions {
-		if !containsPerm(a.perm[role][resource], p) {
-			a.perm[role][resource] = append(a.perm[role][resource], p)
+		if !containsPerm(a.perm[role.Role()][resource.Resource()], p) {
+			a.perm[role.Role()][resource.Resource()] = append(a.perm[role.Role()][resource.Resource()], p)
 		}
 	}
 }
 
-func (a *AuthzService) Allowed(role string, resource string, permission Permission) bool {
+func (a *AuthzService) Allowed(role Role, resource Resource, permission Permission) bool {
 	// If role does not exist, return false
-	if _, ok := a.perm[role]; !ok {
+	if _, ok := a.perm[role.Role()]; !ok {
 		return false
 	}
 
 	// Same for resource
-	if _, ok := a.perm[role][resource]; !ok {
+	if _, ok := a.perm[role.Role()][resource.Resource()]; !ok {
 		return false
 	}
 
-	return containsPerm(a.perm[role][resource], permission)
+	return containsPerm(a.perm[role.Role()][resource.Resource()], permission)
 }
 
 func NewAuthzService() *AuthzService {

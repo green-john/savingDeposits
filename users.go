@@ -1,4 +1,4 @@
-package rentals
+package savingDeposits
 
 type User struct {
 	// Primary key

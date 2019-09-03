@@ -5,7 +5,7 @@ import (
 	"github.com/gorilla/handlers"
 	"net/http"
 	"os"
-	"rentals/auth"
+	"savingDeposits/auth"
 	"strings"
 )
 

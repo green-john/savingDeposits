@@ -1,6 +1,6 @@
 // +heroku install ./cmd/...
 
-module rentals
+module savingDeposits
 
 require (
 	github.com/gorilla/handlers v1.4.0

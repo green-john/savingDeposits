@@ -17,10 +17,10 @@ func ConnectToDB(testing bool) (*gorm.DB, error) {
 		extras += "sslmode=disable"
 	}
 
-	dbHost := os.Getenv("RENTALS_DB_HOST")
-	dbName := os.Getenv("RENTALS_DB_NAME")
-	dbUser := os.Getenv("RENTALS_DB_USER")
-	dbPass := os.Getenv("RENTALS_DB_PASSWORD")
+	dbHost := os.Getenv("SAVINGS_DB_HOST")
+	dbName := os.Getenv("SAVINGS_DB_NAME")
+	dbUser := os.Getenv("SAVINGS_DB_USER")
+	dbPass := os.Getenv("SAVINGS_DB_PASSWORD")
 
 	cnxString := fmt.Sprintf("host=%s user=%s dbname=%s", dbHost, dbUser, dbName)
 

@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"rentals"
-	"rentals/auth"
-	"rentals/postgres"
-	"rentals/transport"
+	"savingDeposits"
+	"savingDeposits/auth"
+	"savingDeposits/postgres"
+	"savingDeposits/transport"
 	"strconv"
 )
 
@@ -27,14 +27,14 @@ func runServer(testing bool, port int) {
 		log.Fatal(err)
 	}
 
-	db.AutoMigrate(rentals.DbModels...)
+	db.AutoMigrate(savingDeposits.DbModels...)
 
 	authN := auth.NewDbAuthnService(db)
 	authZ := auth.NewAuthzService()
-	apartmentsSrv := postgres.NewDbApartmentService(db)
+	//apartmentsSrv := postgres.NewDbApartmentService(db)
 	userService := postgres.NewDbUserService(db)
 
-	srv, err := transport.NewServer(db, authN, authZ, apartmentsSrv, userService)
+	srv, err := transport.NewServer(db, authN, authZ, userService)
 	if err != nil {
 		_, _ = fmt.Fprintln(os.Stderr, "error creating server")
 		os.Exit(1)

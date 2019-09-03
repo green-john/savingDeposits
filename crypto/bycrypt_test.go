@@ -2,7 +2,7 @@ package crypto
 
 import (
 	"fmt"
-	"rentals/tst"
+	"savingDeposits/tst"
 	"testing"
 )
 
