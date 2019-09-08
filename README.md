@@ -42,7 +42,7 @@ for the frontend.
 
 In order to start interacting with the system a first user must be created. The api only allows
 to create clients, so in order to get admin access, you must create a client user, and then
-change the role directly in the database. This was you will have an admin that can then
+change the role directly in the database. This way you will have an admin that can then
 be used to create realtors and more admins.
 
 ## Docs

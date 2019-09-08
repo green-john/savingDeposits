@@ -1,20 +1,14 @@
 import Vue from 'vue'
-import Vuetify from 'vuetify'
+import vuetify from './plugins/vuetify'
 import VueRouter from 'vue-router'
 import $auth from "./components/auth";
 import App from './components/App';
 import Login from './components/Login';
 import NewAccount from './components/NewAccount';
 import Dashboard from './components/Dashboard';
-import * as VueGoogleMaps from 'vue2-google-maps';
+import UserDashboard from './components/UsersDashboard';
 
-Vue.use(Vuetify);
 Vue.use(VueRouter);
-Vue.use(VueGoogleMaps, {
-    load: {
-        key: 'AIzaSyDf43lPdwlF98RCBsJOFNKOkoEjkwxb5Sc'
-    }
-});
 
 function requireAuth(to, from, next) {
     if (!$auth.isLoggedIn()) {
@@ -29,10 +23,11 @@ function requireAuth(to, from, next) {
 
 const router = new VueRouter({
     mode: 'history',
-    base: '/rentals/',
+    base: '/savings/',
     routes: [
         {path: '/login', component: Login},
         {path: '/new', component: NewAccount},
+        {path: '/users', component: UserDashboard},
         {path: '/dashboard', component: Dashboard, alias: '/', beforeEnter: requireAuth},
         {
             path: '/logout', beforeEnter(to, from, next) {
@@ -46,5 +41,6 @@ const router = new VueRouter({
 new Vue({
     el: '#app',
     router,
+    vuetify,
     render: h => h(App),
 });

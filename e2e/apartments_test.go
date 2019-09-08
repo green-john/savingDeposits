@@ -1,5 +1,15 @@
 package e2e
 
+import (
+	//"encoding/json"
+	"fmt"
+	//"io/ioutil"
+	"net/http"
+	"savingDeposits/tst"
+	"sync"
+	"testing"
+)
+
 //import (
 //	"encoding/json"
 //	"fmt"
@@ -31,149 +41,149 @@ package e2e
 //
 //
 //
-//func TestCRUDApartment(t *testing.T) {
-//	var wg sync.WaitGroup
-//	const addr = "localhost:8083"
-//	srv, clean := newServer(t)
-//	defer clean()
-//
-//	// Make sure we delete all things after we are done
-//	serverUrl := fmt.Sprintf("http://%s", addr)
-//
-//	wg.Add(1)
-//	startServer(wg, addr, srv)
-//
-//	_, err := createUser("admin", "admin", "admin", srv.Db)
-//	tst.Ok(t, err)
-//	realtorId, err := createUser("realtor", "realtor", "realtor", srv.Db)
-//	tst.Ok(t, err)
-//	_, err = createUser("client", "client", "client", srv.Db)
-//	tst.Ok(t, err)
-//
-//	t.Run("CRUD apartment no auth, fail", func(t *testing.T) {
-//		res, err := tst.MakeRequest("POST", serverUrl+"/apartments", "", []byte(""))
-//		tst.Ok(t, err)
-//
-//		tst.True(t, res.StatusCode == http.StatusUnauthorized,
-//			fmt.Sprintf("Expected 401, got %d", res.StatusCode))
-//
-//		for _, url := range []string{"/apartments", "/apartments/2"} {
-//			res, err := tst.MakeRequest("GET", serverUrl+url, "", []byte(""))
-//			tst.Ok(t, err)
-//
-//			tst.True(t, res.StatusCode == http.StatusUnauthorized,
-//				fmt.Sprintf("Expected 401, got %d", res.StatusCode))
-//		}
-//
-//		res, err = tst.MakeRequest("PATCH", serverUrl+"/apartments/1", "", []byte(""))
-//		tst.Ok(t, err)
-//
-//		tst.True(t, res.StatusCode == http.StatusUnauthorized,
-//			fmt.Sprintf("Expected 401, got %d", res.StatusCode))
-//
-//		res, err = tst.MakeRequest("DELETE", serverUrl+"/apartments/1", "", []byte(""))
-//		tst.Ok(t, err)
-//
-//		tst.True(t, res.StatusCode == http.StatusUnauthorized,
-//			fmt.Sprintf("Expected 401, got %d", res.StatusCode))
-//	})
-//
-//	t.Run("Create Update Delete apartment with client, fail", func(t *testing.T) {
-//		token, err := getUserToken(t, serverUrl, "client", "client")
-//		tst.Ok(t, err)
-//		newApartmentPayload := newApartmentPayload("apt1", "desc", 5, realtorId)
-//
-//		res, err := tst.MakeRequest("POST", serverUrl+"/apartments", token, newApartmentPayload)
-//		tst.Ok(t, err)
-//
-//		tst.True(t, res.StatusCode == http.StatusForbidden,
-//			fmt.Sprintf("Expected 403 got %d", res.StatusCode))
-//
-//		res, err = tst.MakeRequest("PATCH", serverUrl+"/apartments/1", token, newApartmentPayload)
-//		tst.Ok(t, err)
-//
-//		tst.True(t, res.StatusCode == http.StatusForbidden,
-//			fmt.Sprintf("Expected 403 got %d", res.StatusCode))
-//
-//		res, err = tst.MakeRequest("DELETE", serverUrl+"/apartments/1", token, newApartmentPayload)
-//		tst.Ok(t, err)
-//
-//		tst.True(t, res.StatusCode == http.StatusForbidden,
-//			fmt.Sprintf("Expected 403 got %d", res.StatusCode))
-//	})
-//
-//	t.Run("CRUD apartment realtor admin, success", func(t *testing.T) {
-//		for _, user := range []string{"admin", "realtor"} {
-//			// Get user token
-//			token, err := getUserToken(t, serverUrl, user, user)
-//			tst.Ok(t, err)
-//
-//			// Create
-//			payload := newApartmentPayload("apt1", "desc", 5, realtorId)
-//			res, err := tst.MakeRequest("POST", serverUrl+"/apartments", token, payload)
-//			tst.Ok(t, err)
-//
-//			tst.True(t, res.StatusCode == http.StatusCreated, fmt.Sprintf("Expected 201 got %d", res.StatusCode))
-//			rawContent, err := ioutil.ReadAll(res.Body)
-//			tst.Ok(t, err)
-//
-//			var aptRes apartmentResponse
-//			err = json.Unmarshal(rawContent, &aptRes)
-//
-//			tst.True(t, aptRes.ID >= 1, "Expected id greater than 0")
-//			tst.True(t, aptRes.Name == "apt1", "Got name different name")
-//			tst.True(t, aptRes.RealtorId == realtorId, "Got unexpected realtor")
-//			tst.True(t, aptRes.Available, "Expected apartment to be available")
-//
-//			// Read
-//			apartmentUrl := fmt.Sprintf("%s/apartments/%d", serverUrl, aptRes.ID)
-//			res, err = tst.MakeRequest("GET", apartmentUrl, token, []byte(""))
-//			tst.Ok(t, err)
-//
-//			tst.True(t, res.StatusCode == http.StatusOK,
-//				fmt.Sprintf("Expected 200, got %d", res.StatusCode))
-//
-//			var retApt apartmentResponse
-//			decoder := json.NewDecoder(res.Body)
-//			err = decoder.Decode(&retApt)
-//			tst.Ok(t, err)
-//
-//			tst.True(t, retApt.ID == aptRes.ID, fmt.Sprintf("Expected id 1, got %d", retApt.ID))
-//
-//			// Update
-//			newData := []byte(`{"id": 100, "name": "newName", "description": "newDesc"}`)
-//			res, err = tst.MakeRequest("PATCH", apartmentUrl, token, newData)
-//			tst.Ok(t, err)
-//
-//			tst.True(t, res.StatusCode == http.StatusOK,
-//				fmt.Sprintf("Expected 200, got %d", res.StatusCode))
-//
-//			var updApt apartmentResponse
-//			decoder = json.NewDecoder(res.Body)
-//			err = decoder.Decode(&updApt)
-//			tst.Ok(t, err)
-//			tst.True(t, updApt.ID == retApt.ID,
-//				fmt.Sprintf("Expected id to be %d, got %d", updApt.ID, retApt.ID))
-//			tst.True(t, updApt.Name == "newName",
-//				fmt.Sprintf("Expected name to be newName, got %s", updApt.Name))
-//			tst.True(t, updApt.Desc == "newDesc",
-//				fmt.Sprintf("Expected name to be newDesc, got %s", updApt.Desc))
-//			tst.True(t, updApt.FloorAreaMeters == retApt.FloorAreaMeters,
-//				fmt.Sprintf("Expected floorArea to be %f, got %f",
-//					retApt.FloorAreaMeters, updApt.FloorAreaMeters))
-//			tst.True(t, updApt.PricePerMonthUsd == retApt.PricePerMonthUsd,
-//				fmt.Sprintf("Expected pricePM to be %f, got %f",
-//					retApt.PricePerMonthUsd, updApt.PricePerMonthUsd))
-//
-//			// Delete
-//			res, err = tst.MakeRequest("DELETE", apartmentUrl, token, []byte(""))
-//			tst.Ok(t, err)
-//			tst.True(t, res.StatusCode == http.StatusNoContent,
-//				fmt.Sprintf("Expected 204, got %d", res.StatusCode))
-//		}
-//	})
-//}
-//
+func TestCRUDApartment(t *testing.T) {
+	var wg sync.WaitGroup
+	const addr = "localhost:8083"
+	srv, clean := newServer(t)
+
+	// Delete all the things afterwards
+	defer clean()
+
+	serverUrl := fmt.Sprintf("http://%s", addr)
+	wg.Add(1)
+	startServer(wg, addr, srv)
+
+	_, err := createUser("admin", "admin", "admin", srv.Db)
+	tst.Ok(t, err)
+	//regularId, err := createUser("regular", "regular", "regular", srv.Db)
+	tst.Ok(t, err)
+	//_, err = createUser("client", "client", "client", srv.Db)
+	//tst.Ok(t, err)
+
+	t.Run("CRUD apartment no auth, fail", func(t *testing.T) {
+		res, err := tst.MakeRequest("POST", serverUrl+"/deposits", "", []byte(""))
+		tst.Ok(t, err)
+
+		tst.True(t, res.StatusCode == http.StatusUnauthorized,
+			fmt.Sprintf("Expected 401, got %d", res.StatusCode))
+
+		for _, url := range []string{"/deposits", "/deposits/2"} {
+			res, err := tst.MakeRequest("GET", serverUrl+url, "", []byte(""))
+			tst.Ok(t, err)
+
+			tst.True(t, res.StatusCode == http.StatusUnauthorized,
+				fmt.Sprintf("Expected 401, got %d", res.StatusCode))
+		}
+
+		res, err = tst.MakeRequest("PATCH", serverUrl+"/apartments/1", "", []byte(""))
+		tst.Ok(t, err)
+
+		tst.True(t, res.StatusCode == http.StatusUnauthorized,
+			fmt.Sprintf("Expected 401, got %d", res.StatusCode))
+
+		res, err = tst.MakeRequest("DELETE", serverUrl+"/apartments/1", "", []byte(""))
+		tst.Ok(t, err)
+
+		tst.True(t, res.StatusCode == http.StatusUnauthorized,
+			fmt.Sprintf("Expected 401, got %d", res.StatusCode))
+	})
+
+	//t.Run("Create Update Delete apartment with client, fail", func(t *testing.T) {
+	//	token, err := getUserToken(t, serverUrl, "client", "client")
+	//	tst.Ok(t, err)
+	//	newApartmentPayload := newApartmentPayload("apt1", "desc", 5, realtorId)
+	//
+	//	res, err := tst.MakeRequest("POST", serverUrl+"/apartments", token, newApartmentPayload)
+	//	tst.Ok(t, err)
+	//
+	//	tst.True(t, res.StatusCode == http.StatusForbidden,
+	//		fmt.Sprintf("Expected 403 got %d", res.StatusCode))
+	//
+	//	res, err = tst.MakeRequest("PATCH", serverUrl+"/apartments/1", token, newApartmentPayload)
+	//	tst.Ok(t, err)
+	//
+	//	tst.True(t, res.StatusCode == http.StatusForbidden,
+	//		fmt.Sprintf("Expected 403 got %d", res.StatusCode))
+	//
+	//	res, err = tst.MakeRequest("DELETE", serverUrl+"/apartments/1", token, newApartmentPayload)
+	//	tst.Ok(t, err)
+	//
+	//	tst.True(t, res.StatusCode == http.StatusForbidden,
+	//		fmt.Sprintf("Expected 403 got %d", res.StatusCode))
+	//})
+	//
+	//t.Run("CRUD apartment realtor admin, success", func(t *testing.T) {
+	//	for _, user := range []string{"admin", "realtor"} {
+	//		// Get user token
+	//		token, err := getUserToken(t, serverUrl, user, user)
+	//		tst.Ok(t, err)
+	//
+	//		// Create
+	//		payload := newApartmentPayload("apt1", "desc", 5, realtorId)
+	//		res, err := tst.MakeRequest("POST", serverUrl+"/apartments", token, payload)
+	//		tst.Ok(t, err)
+	//
+	//		tst.True(t, res.StatusCode == http.StatusCreated, fmt.Sprintf("Expected 201 got %d", res.StatusCode))
+	//		rawContent, err := ioutil.ReadAll(res.Body)
+	//		tst.Ok(t, err)
+	//
+	//		var aptRes apartmentResponse
+	//		err = json.Unmarshal(rawContent, &aptRes)
+	//
+	//		tst.True(t, aptRes.ID >= 1, "Expected id greater than 0")
+	//		tst.True(t, aptRes.Name == "apt1", "Got name different name")
+	//		tst.True(t, aptRes.RealtorId == realtorId, "Got unexpected realtor")
+	//		tst.True(t, aptRes.Available, "Expected apartment to be available")
+	//
+	//		// Read
+	//		apartmentUrl := fmt.Sprintf("%s/apartments/%d", serverUrl, aptRes.ID)
+	//		res, err = tst.MakeRequest("GET", apartmentUrl, token, []byte(""))
+	//		tst.Ok(t, err)
+	//
+	//		tst.True(t, res.StatusCode == http.StatusOK,
+	//			fmt.Sprintf("Expected 200, got %d", res.StatusCode))
+	//
+	//		var retApt apartmentResponse
+	//		decoder := json.NewDecoder(res.Body)
+	//		err = decoder.Decode(&retApt)
+	//		tst.Ok(t, err)
+	//
+	//		tst.True(t, retApt.ID == aptRes.ID, fmt.Sprintf("Expected id 1, got %d", retApt.ID))
+	//
+	//		// Update
+	//		newData := []byte(`{"id": 100, "name": "newName", "description": "newDesc"}`)
+	//		res, err = tst.MakeRequest("PATCH", apartmentUrl, token, newData)
+	//		tst.Ok(t, err)
+	//
+	//		tst.True(t, res.StatusCode == http.StatusOK,
+	//			fmt.Sprintf("Expected 200, got %d", res.StatusCode))
+	//
+	//		var updApt apartmentResponse
+	//		decoder = json.NewDecoder(res.Body)
+	//		err = decoder.Decode(&updApt)
+	//		tst.Ok(t, err)
+	//		tst.True(t, updApt.ID == retApt.ID,
+	//			fmt.Sprintf("Expected id to be %d, got %d", updApt.ID, retApt.ID))
+	//		tst.True(t, updApt.Name == "newName",
+	//			fmt.Sprintf("Expected name to be newName, got %s", updApt.Name))
+	//		tst.True(t, updApt.Desc == "newDesc",
+	//			fmt.Sprintf("Expected name to be newDesc, got %s", updApt.Desc))
+	//		tst.True(t, updApt.FloorAreaMeters == retApt.FloorAreaMeters,
+	//			fmt.Sprintf("Expected floorArea to be %f, got %f",
+	//				retApt.FloorAreaMeters, updApt.FloorAreaMeters))
+	//		tst.True(t, updApt.PricePerMonthUsd == retApt.PricePerMonthUsd,
+	//			fmt.Sprintf("Expected pricePM to be %f, got %f",
+	//				retApt.PricePerMonthUsd, updApt.PricePerMonthUsd))
+	//
+	//		// Delete
+	//		res, err = tst.MakeRequest("DELETE", apartmentUrl, token, []byte(""))
+	//		tst.Ok(t, err)
+	//		tst.True(t, res.StatusCode == http.StatusNoContent,
+	//			fmt.Sprintf("Expected 204, got %d", res.StatusCode))
+	//	}
+	//})
+}
+
 //func TestReadAllApartmentsAndSearch(t *testing.T) {
 //	var wg sync.WaitGroup
 //	const addr = "localhost:8083"

@@ -102,12 +102,12 @@ func getUser(id string, db *gorm.DB) (*savingDeposits.User, error) {
 func createUser(username, password, role string, db *gorm.DB) (*savingDeposits.User, error) {
 	if !validRole(role) {
 		return nil, errors.New(
-			fmt.Sprintf("error creating user. Unknown role %s", role))
+			fmt.Sprintf("error creating user. Unknown role '%s'", role))
 	}
 
 	pwdHash, err := crypto.EncryptPassword(password)
 	if err != nil {
-		return nil, fmt.Errorf("error encrypting password %v", err)
+		return nil, fmt.Errorf("error encrypting password '%v'", err)
 	}
 
 	user := savingDeposits.User{
@@ -117,7 +117,7 @@ func createUser(username, password, role string, db *gorm.DB) (*savingDeposits.U
 	}
 
 	if err = db.Create(&user).Error; err != nil {
-		return nil, fmt.Errorf("error creating user %v", err)
+		return nil, fmt.Errorf("error creating user '%v'", err)
 	}
 
 	return &user, nil
