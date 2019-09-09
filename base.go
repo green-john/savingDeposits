@@ -3,7 +3,7 @@ package savingDeposits
 var DbModels = []interface{}{
 	&User{},
 	&UserSession{},
-	//&Apartment{},
+	&SavingDeposit{},
 }
 
 type uid uint

@@ -16,11 +16,11 @@ func Ok(t *testing.T, err error) {
 	}
 }
 
-func True(t *testing.T, expr bool, errorMsg string) {
+func True(t *testing.T, expr bool, errorMsg string, fmtArgs... interface{}) {
 	t.Helper()
 
 	if !expr {
-		t.Errorf(errorMsg)
+		t.Errorf(errorMsg, fmtArgs...)
 	}
 }
 

@@ -84,8 +84,8 @@ func getResource(urlPath string) string {
 		return "users"
 	}
 
-	if strings.HasPrefix(urlPath, "/savingDeposits") {
-		return "savingDeposits"
+	if strings.HasPrefix(urlPath, "/deposits") {
+		return "deposits"
 	}
 
 	return ""

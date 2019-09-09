@@ -23,12 +23,12 @@ type Public interface {
 }
 
 type Server struct {
-	Db     *gorm.DB
-	router *mux.Router
-	authn  auth.AuthnService
-	authz  *auth.AuthzService
-	//apartmentService savingDeposits.ApartmentService
-	userService savingDeposits.UserService
+	Db              *gorm.DB
+	router          *mux.Router
+	authn           auth.AuthnService
+	authz           *auth.AuthzService
+	DepositsService savingDeposits.DepositsService
+	userService     savingDeposits.UserService
 }
 
 // Creates an http server and serves it in the specified address
@@ -48,24 +48,26 @@ func (s *Server) setupAuthorization() {
 		auth.Create, auth.Read, auth.Update, auth.Delete)
 	s.authz.AddPermission(savingDeposits.MANAGER, savingDeposits.USERS,
 		auth.Create, auth.Read, auth.Update, auth.Delete)
-	//s.authz.AddPermission("admin", "apartments",
+	s.authz.AddPermission(savingDeposits.ADMIN, savingDeposits.DEPOSITS,
+		auth.Create, auth.Read, auth.Update, auth.Delete)
+	//s.authz.AddPermission("realtor", "savingss",
 	//	auth.Create, auth.Read, auth.Update, auth.Delete)
-	//s.authz.AddPermission("realtor", "apartments",
-	//	auth.Create, auth.Read, auth.Update, auth.Delete)
-	//s.authz.AddPermission("client", "apartments", auth.Read)
+	//s.authz.AddPermission("client", "savingss", auth.Read)
 }
 
 // Creates GET, POST, PATH and DELETE user handlers.
-//func (s *Server) AddApartmentsHandlers(basePath string) {
-//	url := fmt.Sprintf("/%s", basePath)
-//	urlWithId := fmt.Sprintf("%s/{id:[0-9]+}", url)
-//
-//	s.router.HandleFunc(url, postApartmentsHandler(s.apartmentService)).Methods("POST")
-//	s.router.HandleFunc(url, getAllApartmentsHandler(s.apartmentService)).Methods("GET")
-//	s.router.HandleFunc(urlWithId, getApartmentsHandler(s.apartmentService)).Methods("GET")
-//	s.router.HandleFunc(urlWithId, patchApartmentsHandler(s.apartmentService)).Methods("PATCH")
-//	s.router.HandleFunc(urlWithId, deleteApartmentsHandler(s.apartmentService)).Methods("DELETE")
-//}
+func (s *Server) AddDepositsHandler(basePath string) {
+	url := "/" + basePath
+	urlWithId := url + "/{id:[0-9]+}"
+
+	fmt.Println(url, urlWithId)
+
+	s.router.HandleFunc(url, postSavingsHandler(s.DepositsService)).Methods("POST")
+	s.router.HandleFunc(url, getAllSavingsHandler(s.DepositsService)).Methods("GET")
+	s.router.HandleFunc(urlWithId, getSavingsHandler(s.DepositsService)).Methods("GET")
+	s.router.HandleFunc(urlWithId, patchSavingsHandler(s.DepositsService)).Methods("PATCH")
+	s.router.HandleFunc(urlWithId, deleteSavingsHandler(s.DepositsService)).Methods("DELETE")
+}
 
 // Creates GET, POST, PATH and DELETE user handlers.
 func (s *Server) AddUsersHandlers(basePath string) {
@@ -169,95 +171,95 @@ func deleteUsersHandler(service savingDeposits.UserService) func(w http.Response
 	}
 }
 
-//func getApartmentsHandler(srv savingDeposits.ApartmentService) func(w http.ResponseWriter, r *http.Request) {
-//	return func(w http.ResponseWriter, r *http.Request) {
-//		vars := mux.Vars(r)
-//		var input savingDeposits.ApartmentReadInput
-//		input.Id = vars["id"]
-//
-//		result, err := srv.Read(input)
-//		if err != nil {
-//			badRequestError(err, w)
-//			return
-//		}
-//
-//		respond(w, http.StatusOK, result)
-//	}
-//}
+func getSavingsHandler(srv savingDeposits.DepositsService) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		var input savingDeposits.DepositReadInput
+		input.Id = vars["id"]
 
-//func getAllApartmentsHandler(srv savingDeposits.ApartmentService) func(w http.ResponseWriter, r *http.Request) {
-//	return func(w http.ResponseWriter, r *http.Request) {
-//		var input savingDeposits.ApartmentFindInput
-//		input.Query = r.URL.RawQuery
-//
-//		result, err := srv.Find(input)
-//		if err != nil {
-//			respond(w, http.StatusBadRequest, err.Error())
-//			return
-//		}
-//
-//		respond(w, http.StatusOK, result)
-//	}
-//}
-//
-//func postApartmentsHandler(srv savingDeposits.ApartmentService) func(w http.ResponseWriter, r *http.Request) {
-//	return func(w http.ResponseWriter, r *http.Request) {
-//		defer r.Body.Close()
-//		var newApartment savingDeposits.Apartment
-//		if err := json.NewDecoder(r.Body).Decode(&newApartment); err != nil {
-//			respond(w, http.StatusBadRequest, err.Error())
-//			return
-//		}
-//
-//		result, err := srv.Create(savingDeposits.ApartmentCreateInput{Apartment: newApartment})
-//		if err != nil {
-//			badRequestError(err, w)
-//			return
-//		}
-//
-//		respond(w, http.StatusCreated, result)
-//	}
-//}
-//
-//func patchApartmentsHandler(srv savingDeposits.ApartmentService) func(w http.ResponseWriter, r *http.Request) {
-//	return func(w http.ResponseWriter, r *http.Request) {
-//		vars := mux.Vars(r)
-//		defer r.Body.Close()
-//
-//		var updateInput savingDeposits.ApartmentUpdateInput
-//
-//		if err := json.NewDecoder(r.Body).Decode(&updateInput.Data); err != nil {
-//			respond(w, http.StatusBadRequest, err.Error())
-//			return
-//		}
-//
-//		updateInput.Id = vars["id"]
-//
-//		result, err := srv.Update(updateInput)
-//		if err != nil {
-//			badRequestError(err, w)
-//			return
-//		}
-//
-//		respond(w, http.StatusOK, result)
-//	}
-//}
-//
-//func deleteApartmentsHandler(srv savingDeposits.ApartmentService) func(w http.ResponseWriter, r *http.Request) {
-//	return func(w http.ResponseWriter, r *http.Request) {
-//		var deleteIn savingDeposits.ApartmentDeleteInput
-//
-//		vars := mux.Vars(r)
-//		deleteIn.Id = vars["id"]
-//		_, err := srv.Delete(deleteIn)
-//		if err != nil {
-//			badRequestError(err, w)
-//			return
-//		}
-//
-//		respond(w, http.StatusNoContent, nil)
-//	}
-//}
+		result, err := srv.Read(input)
+		if err != nil {
+			badRequestError(err, w)
+			return
+		}
+
+		respond(w, http.StatusOK, result)
+	}
+}
+
+func getAllSavingsHandler(srv savingDeposits.DepositsService) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var input savingDeposits.DepositFindInput
+		input.Query = r.URL.RawQuery
+
+		result, err := srv.Find(input)
+		if err != nil {
+			respond(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		respond(w, http.StatusOK, result)
+	}
+}
+
+func postSavingsHandler(srv savingDeposits.DepositsService) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+		var newSavings savingDeposits.SavingDeposit
+		if err := json.NewDecoder(r.Body).Decode(&newSavings); err != nil {
+			respond(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		result, err := srv.Create(savingDeposits.DespositCreateInput{SavingDeposit: newSavings})
+		if err != nil {
+			badRequestError(err, w)
+			return
+		}
+
+		respond(w, http.StatusCreated, result)
+	}
+}
+
+func patchSavingsHandler(srv savingDeposits.DepositsService) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		defer r.Body.Close()
+
+		var updateInput savingDeposits.DepositUpdateInput
+
+		if err := json.NewDecoder(r.Body).Decode(&updateInput.Data); err != nil {
+			respond(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		updateInput.Id = vars["id"]
+
+		result, err := srv.Update(updateInput)
+		if err != nil {
+			badRequestError(err, w)
+			return
+		}
+
+		respond(w, http.StatusOK, result)
+	}
+}
+
+func deleteSavingsHandler(srv savingDeposits.DepositsService) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var deleteIn savingDeposits.DepositDeleteInput
+
+		vars := mux.Vars(r)
+		deleteIn.Id = vars["id"]
+		_, err := srv.Delete(deleteIn)
+		if err != nil {
+			badRequestError(err, w)
+			return
+		}
+
+		respond(w, http.StatusNoContent, nil)
+	}
+}
 
 func badRequestError(err error, w http.ResponseWriter) {
 	log.Printf("[ERROR] %s", err.Error())
@@ -270,23 +272,24 @@ func badRequestError(err error, w http.ResponseWriter) {
 }
 
 func NewServer(db *gorm.DB, authNService auth.AuthnService, authZService *auth.AuthzService,
-	userService savingDeposits.UserService) (*Server, error) {
+	depositsService savingDeposits.DepositsService, userService savingDeposits.UserService) (*Server, error) {
 	router := mux.NewRouter()
 
 	s := &Server{
-		Db:     db,
-		router: router,
-		authn:  authNService,
-		authz:  authZService,
-		//apartmentService: apartmentsService,
-		userService: userService,
+		Db:              db,
+		router:          router,
+		authn:           authNService,
+		authz:           authZService,
+		DepositsService: depositsService,
+		userService:     userService,
 	}
 
 	// Adds POST, GET, PATCH, DELETE for users
 	s.AddUsersHandlers("users")
 
-	// Adds POST, GET, PATCH, DELETE for apartments
-	//s.AddApartmentsHandlers("apartments")
+	// Adds POST, GET, PATCH, DELETE for deposits
+	fmt.Println("Adding deposit handlers")
+	s.AddDepositsHandler("deposits")
 
 	// Add other handlers
 	router.HandleFunc("/login", s.LoginHandler()).Methods("POST")

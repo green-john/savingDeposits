@@ -37,8 +37,7 @@ func TestCRUDUsers(t *testing.T) {
 		// Create
 		res, err := tst.MakeRequest("POST", serverUrl+"/users", "", payload)
 		tst.Ok(t, err)
-		tst.True(t, res.StatusCode == http.StatusUnauthorized,
-			fmt.Sprintf("Expected 401, got %d", res.StatusCode))
+		tst.True(t, res.StatusCode == http.StatusUnauthorized, "Expected 401, got %d", res.StatusCode)
 
 		// Read
 		res, err = tst.MakeRequest("GET", serverUrl+"/users", "", payload)

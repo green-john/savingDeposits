@@ -23,10 +23,11 @@ type Resource uint
 
 const (
 	USERS Resource = iota
+	DEPOSITS
 )
 
-var AllResources = []Resource{USERS}
-var stringResources = []string{"users"}
+var AllResources = []Resource{USERS, DEPOSITS}
+var stringResources = []string{"users", "deposits"}
 
 func (r Resource) String() string {
 	return stringRoles[r]
@@ -39,6 +40,7 @@ func (r Resource) Resource() string {
 func ResourceFromString(s string) Resource {
 	m := map[string]Resource{
 		"users": USERS,
+		"deposits": DEPOSITS,
 	}
 
 	return m[s]

@@ -49,10 +49,11 @@ func newServer(t *testing.T) (*transport.Server, func()) {
 
 	authN := auth.NewDbAuthnService(db)
 	authZ := auth.NewAuthzService()
-	//apatService := postgres.NewDbApartmentService(db)
+	depositService := postgres.NewDbSavingDepositService(db)
 	usrService := postgres.NewDbUserService(db)
 
-	srv, err := transport.NewServer(db, authN, authZ, usrService)
+	srv, err := transport.NewServer(db, authN, authZ, depositService,
+		usrService)
 	tst.Ok(t, err)
 
 	return srv, func() {

@@ -1,130 +1,172 @@
 package savingDeposits
 
-//type Apartment struct {
-//	// Primary key
-//	ID uid `gorm:"primary_key" json:"id"`
-//
-//	// Date added
-//	DateAdded time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"dateAdded"`
-//
-//	// Name of this property
-//	Name string `json:"name"`
-//
-//	// Description
-//	Desc string `json:"description"`
-//
-//	// Realtor associated with this apartment
-//	Realtor   User `json:"-" gorm:"foreignkey:RealtorId"`
-//	RealtorId uint `json:"realtorId"`
-//
-//	// Floor size area
-//	// See:
-//	// https://stackoverflow.com/questions/445191/should-we-put-units-of-measurements-in-attribute-names
-//	FloorAreaMeters float32 `json:"floorAreaMeters"`
-//
-//	// Monthly rent
-//	PricePerMonthUsd float32 `json:"pricePerMonthUSD"`
-//
-//	// Number of rooms
-//	RoomCount int `json:"roomCount"`
-//
-//	// Geolocation
-//	Latitude  float32 `json:"latitude"`
-//	Longitude float32 `json:"longitude"`
-//
-//	// Availability of the apartment
-//	Available bool `json:"available"`
-//}
-//
-//func (uid) UnmarshalJSON([]byte) error {
-//	return nil
-//}
-//
-//// Validates data for a new apartment.
-//func (s *Apartment) Validate() error {
-//	allErrors := ""
-//
-//	if s.Name == "" {
-//		allErrors += "Name can't be empty\n"
-//	}
-//
-//	if s.FloorAreaMeters <= 0 {
-//		allErrors += "Floor Area must be greater than 0\n"
-//	}
-//
-//	if s.PricePerMonthUsd <= 0 {
-//		allErrors += "Price per month must be greater than 0\n"
-//	}
-//
-//	if s.RoomCount <= 0 {
-//		allErrors += "Room count must be greater than 0\n"
-//	}
-//
-//	if s.Latitude < -90 || s.Latitude > 90 {
-//		allErrors += "Latitude must be in the range [-90.0, 90.0]\n"
-//	}
-//
-//	if s.Longitude < -180 || s.Longitude > 180 {
-//		allErrors += "Longitude must be in the range [-180.0, 180.0]\n"
-//	}
-//
-//	if allErrors == "" {
-//		return nil
-//	}
-//
-//	return errors.New("\n" + allErrors)
-//}
-//
-//type ApartmentService interface {
-//	Create(ApartmentCreateInput) (*ApartmentCreateOutput, error)
-//	Read(ApartmentReadInput) (*ApartmentReadOutput, error)
-//	Find(ApartmentFindInput) (*ApartmentFindOutput, error)
-//	Update(ApartmentUpdateInput) (*ApartmentUpdateOutput, error)
-//	Delete(ApartmentDeleteInput) (*ApartmentDeleteOutput, error)
-//}
-//
-//type ApartmentCreateInput struct {
-//	Apartment
-//}
-//
-//type ApartmentCreateOutput struct {
-//	Apartment
-//}
-//
-//type ApartmentReadInput struct {
-//	// ID to lookup the apartment
-//	Id string
-//}
-//
-//type ApartmentReadOutput struct {
-//	Apartment
-//}
-//
-//type ApartmentFindInput struct {
-//	Query string
-//}
-//
-//type ApartmentFindOutput struct {
-//	Apartments []Apartment
-//}
-//
-//func (o *ApartmentFindOutput) Public() interface{} {
-//	return o.Apartments
-//}
-//
-//type ApartmentUpdateInput struct {
-//	Id   string
-//	Data map[string]interface{}
-//}
-//
-//type ApartmentUpdateOutput struct {
-//	Apartment
-//}
-//
-//type ApartmentDeleteInput struct {
-//	Id string
-//}
-//
-//type ApartmentDeleteOutput struct {
-//	Message string
-//}
+import (
+	"database/sql/driver"
+	"errors"
+	"math"
+	"strings"
+	"time"
+)
+
+type Date time.Time
+
+const DateFormat = "2006-01-02"
+
+type SavingDeposit struct {
+	// Primary key
+	ID uid `gorm:"primary_key" json:"id"`
+
+	// Bank name
+	BankName string `json:"bankName"`
+
+	// Account number
+	AccountNumber string `json:"accountNumber"`
+
+	// Initial Amount
+	InitialAmount float64 `json:"initialAmount"`
+
+	// Yearly interest
+	YearlyInterest float64 `json:"yearlyInterest"`
+
+	// Yearly taxes
+	YearlyTax float64 `json:"yearlyTax"`
+
+	// Date added
+	StartDate Date `gorm:"type:date" json:"startDate"`
+
+	// Date added
+	EndDate Date `gorm:"type:date" json:"endDate"`
+
+	// Realtor associated with this SavingDeposit
+	Owner   User `json:"-" gorm:"foreignkey:OwnerId"`
+	OnwerId uint `json:"ownerId"`
+}
+
+func (uid) UnmarshalJSON([]byte) error {
+	return nil
+}
+
+func (d *Date) UnmarshalJSON(b []byte) error {
+	s := strings.Trim(string(b), "\"")
+	println(s)
+
+	t, err := time.Parse(DateFormat, s)
+	if err != nil {
+		return err
+	}
+
+	*d = Date(t)
+	return nil
+}
+
+func (d Date) MarshalJSON() ([]byte, error) {
+	t := time.Time(d)
+	return []byte("\"" + t.Format(DateFormat) + "\""), nil
+}
+
+func (d Date) Value() (driver.Value, error) {
+	return time.Time(d), nil
+}
+
+func (d *Date) Scan(value interface{}) error {
+	*d = Date(value.(time.Time))
+	return nil
+}
+
+// Validates data for a new deposits.
+func (s *SavingDeposit) Validate() error {
+	allErrors := ""
+
+	if strings.Trim(s.BankName, " ") == "" {
+		allErrors += "Bank name can't be empty\n"
+	}
+
+	if strings.Trim(s.AccountNumber, " ") == "" {
+		allErrors += "Account number can't be empty\n"
+	}
+
+	if s.InitialAmount <= 0 {
+		allErrors += "Initial amount must be greater than 0\n"
+	}
+
+	if !isFraction(s.YearlyTax) {
+		allErrors += "Yearly tax should be positive and between [0.0, 1.0]"
+	}
+
+	if !isFraction(math.Abs(s.YearlyInterest)) {
+		allErrors += "Yearly interest should be between [-1.0, 1.0]"
+	}
+
+	startDate := time.Time(s.StartDate)
+	endDate := time.Time(s.EndDate)
+
+	if !startDate.Before(endDate) {
+		allErrors += "Start date must be before end date\n"
+	}
+
+	// TODO validate owner is not zero
+
+	if allErrors == "" {
+		return nil
+	}
+
+	return errors.New("\n" + allErrors)
+}
+
+func isFraction(n float64) bool {
+	return n >= 0 && n <= 1.0
+}
+
+type DespositCreateInput struct {
+	SavingDeposit
+}
+
+type DepositCreateOutput struct {
+	SavingDeposit
+}
+
+type DepositReadInput struct {
+	// ID to lookup the SavingDeposit
+	Id string
+}
+
+type DepositReadOutput struct {
+	SavingDeposit
+}
+
+type DepositFindInput struct {
+	Query string
+}
+
+type DepositFindOutput struct {
+	Deposits []SavingDeposit
+}
+
+func (o *DepositFindOutput) Public() interface{} {
+	return o.Deposits
+}
+
+type DepositUpdateInput struct {
+	Id   string
+	Data map[string]interface{}
+}
+
+type DepositUpdateOutput struct {
+	SavingDeposit
+}
+
+type DepositDeleteInput struct {
+	Id string
+}
+
+type DepositDeleteOutput struct {
+	Message string
+}
+
+type DepositsService interface {
+	Create(DespositCreateInput) (*DepositCreateOutput, error)
+	Read(DepositReadInput) (*DepositReadOutput, error)
+	Find(DepositFindInput) (*DepositFindOutput, error)
+	Update(DepositUpdateInput) (*DepositUpdateOutput, error)
+	Delete(DepositDeleteInput) (*DepositDeleteOutput, error)
+}
