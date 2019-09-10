@@ -1,116 +1,199 @@
 <template>
-  <div class="wrapper">
-    <router-link class="logout-link" v-if="loggedIn" to="/logout">Log out</router-link>
+    <div class="wrapper">
+        <v-toolbar flat>
+            <v-toolbar-title>
+                Dashboard
+                <router-link class="logout-link" v-if="loggedIn" to="/logout">Log out</router-link>
+            </v-toolbar-title>
+            <div class="flex-grow-1"></div>
+            <v-dialog v-on:click:outside="close()" v-model="showModal" max-width="500px"
+                      v-on:keydown.esc="close()">
+                <template v-slot:activator="{ on }">
+                    <v-btn color="primary" dark class="mb-2" v-on="on">New Deposit</v-btn>
+                </template>
+                <v-card class="pa-0">
+                    <v-card-title>
+                        <span class="headline">{{ fromTitle }}</span>
+                    </v-card-title>
 
-    <NewApartment :showModal="this.showModal"></NewApartment>
+                    <v-card-text>
+                        <v-container>
+                            <v-row>
+                                <v-col cols="12" sm="6" md="4">
+                                    <v-text-field v-model="editedDeposit.accountNumber"
+                                                  label="Acc Number"></v-text-field>
+                                </v-col>
+                                <v-col cols="12" sm="6" md="4">
+                                    <v-text-field v-model="editedDeposit.bankName" label="Bank Name"></v-text-field>
+                                </v-col>
+                                <v-col cols="12" sm="6" md="4">
+                                    <v-text-field v-model.number="editedDeposit.initialAmount"
+                                                  label="Initial amount" type="number"></v-text-field>
+                                </v-col>
+                                <v-col cols="12" sm="6" md="4">
+                                    <v-menu
+                                            v-model="showMenu.startDate"
+                                            :close-on-content-click="false"
+                                            :nudge-right="40"
+                                            transition="scale-transition"
+                                            offset-y
+                                            min-width="290px"
+                                    >
+                                        <template v-slot:activator="{ on }">
+                                            <v-text-field
+                                                    v-model="editedDeposit.startDate"
+                                                    label="Start date"
+                                                    prepend-icon="event"
+                                                    readonly
+                                                    v-on="on"
+                                            ></v-text-field>
+                                        </template>
+                                        <v-date-picker v-model="editedDeposit.startDate"
+                                                       @input="showMenu.startDate = false">
 
-    <div class="dashboard">
-      <div class='sidebar'>
-        <div class='heading'>
-          <h1>Apartments</h1>
-          <v-btn slot="activator" class="new-apartment" fab dark small color="blue"
-                 v-if="canCrudApartment()" @click="showModal = true;">
-            <v-icon dark>add</v-icon>
-          </v-btn>
+                                        </v-date-picker>
+                                    </v-menu>
+                                </v-col>
+                                <v-col cols="12" sm="6" md="4">
+                                    <v-menu
+                                            v-model="showMenu.endDate"
+                                            :close-on-content-click="false"
+                                            :nudge-right="40"
+                                            transition="scale-transition"
+                                            offset-y
+                                            min-width="290px"
+                                    >
+                                        <template v-slot:activator="{ on }">
+                                            <v-text-field
+                                                    v-model="editedDeposit.endDate"
+                                                    label="End Date"
+                                                    prepend-icon="event"
+                                                    readonly
+                                                    v-on="on"
+                                            ></v-text-field>
+                                        </template>
+                                        <v-date-picker v-model="editedDeposit.endDate"
+                                                       @input="showMenu.endDate = false">
+                                        </v-date-picker>
+                                    </v-menu>
+                                </v-col>
+                                <v-col cols="12" sm="6" md="4">
+                                    <v-text-field v-model.number="editedDeposit.yearlyInterest"
+                                                  label="Yearly Interest" type="number"></v-text-field>
+                                </v-col>
+                                <v-col cols="12" sm="6" md="4">
+                                    <v-text-field v-model.number="editedDeposit.yearlyTax"
+                                                  label="Yearly Tax" type="number"></v-text-field>
+                                </v-col>
+                            </v-row>
+                        </v-container>
+                    </v-card-text>
+
+                    <v-card-actions>
+                        <div class="flex-grow-1"></div>
+                        <v-btn color="blue darken-1" text @click="close">Cancel</v-btn>
+                        <v-btn color="blue darken-1" text @click="save">Save</v-btn>
+                    </v-card-actions>
+                </v-card>
+            </v-dialog>
+        </v-toolbar>
+
+
+        <div class="deposits">
+            <v-card outlined v-for="deposit of deposits" :key="deposit.id">
+                <v-row no-gutters class="ml-6 mt-4">
+                    <v-col sm="2" md="2" class="overline">From {{ deposit.startDate }}</v-col>
+                    <v-col sm="2" md="2" class="overline">To {{ deposit.endDate }}</v-col>
+                </v-row>
+
+                <v-row no-gutters class="ml-6 mt-4">
+                    <v-col sm="4" md="3">
+                        <v-container>
+                            <v-row no-gutters>
+                                <v-col class="accountNumber">Account: {{deposit.accountNumber}}</v-col>
+                            </v-row>
+                            <v-row no-gutters>
+                                <v-col class="bankName">Bank: {{deposit.bankName}}</v-col>
+                            </v-row>
+                            <v-row no-gutters>
+                                <v-col>
+                                    <label class="initialAmount">Amount: ${{ deposit.initialAmount }}</label>
+                                    <label class="interest pl-4">{{ deposit.yearlyInterest }}%▲</label>
+                                    <label class="tax pl-4">{{ deposit.yearlyTax }}%▼</label>
+                                </v-col>
+                            </v-row>
+                        </v-container>
+                    </v-col>
+                </v-row>
+
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn outlined text @click="editDeposit(deposit)">Edit</v-btn>
+                    <v-btn outlined text @click="deleteDeposit(deposit.id)">Delete</v-btn>
+                </v-card-actions>
+            </v-card>
         </div>
-        <div class="filters">
-          <form class="filters-form" @submit.prevent="filterApartments()">
-            <v-text-field label="Area (m2)" type="number" step="0.001"
-                          v-model.number="filterData.floorAreaMeters"></v-text-field>
-            <v-text-field label="Price (USD)" type="number" min="0.0" step="0.01"
-                          v-model.number="filterData.pricePerMonthUSD"></v-text-field>
-            <v-text-field label="Rooms" type="number" min="0"
-                          v-model.number="filterData.roomCount"></v-text-field>
-            <v-btn fab dark small type="submit" color="black">
-              <v-icon dark>search</v-icon>
-            </v-btn>
-          </form>
-        </div>
-        <div id='listings' class='listings'>
-          <v-card class="item" v-for="rental of rentals" :key="rental.id">
-            <a href="#" @click="panTo(rental.latitude, rental.longitude)">
-              {{ rental.name }}
-            </a><em v-if="!rental.available">(Occupied)</em>
-            <div class="detail">
-              <b>Price:</b> <em> ${{ rental.pricePerMonthUSD }} </em>
-              <b>Area:</b> <em> {{ rental.floorAreaMeters }}m2 </em>
-              <b>Rooms:</b> <em> {{ rental.roomCount }} </em>
-              <div class="added"><b>Added:</b> <em> {{ formatDate(rental.dateAdded) }}</em></div>
-              <div class="desc" v-if="rental.description">{{ rental.description }}</div>
-            </div>
-            <v-btn outline @click="toggleAvailability(rental)"
-                   v-if="canCrudApartment()">{{ rental.available ? "Rent out" : "Available"}}
-            </v-btn>
-          </v-card>
-        </div>
-      </div>
-
-      <GmapMap class="map" ref="mmm" :center="mapProps.center" :zoom="mapProps.zoom">
-        <GmapInfoWindow :options="mapProps.infoWindowOptions" :position="infoWindowPos" :opened="infoWindowOpen"
-                        @closeclick="infoWindowOpen = false">
-          {{ infoContent }}
-        </GmapInfoWindow>
 
 
-        <GmapMarker :key="i" v-for="(m, i) in markers" :position="m.position"
-                    @click="toggleInfoWindow(m, i)"></GmapMarker>
-      </GmapMap>
     </div>
-  </div>
 </template>
 
 
 <script>
+    import Vue from 'vue'
     import $auth from "./auth";
-    import $rentals from './rentals';
+    import $deposits from './deposits';
     import $users from "./users";
-    import NewApartment from './NewApartment';
+
+    function handleError(err) {
+        if (err.response) {
+            console.log(err.response.status);
+            alert(`[ERROR] ${err.response.data}`);
+        } else if (err.request) {
+            alert(`[ERROR] ${err.request}`);
+        } else {
+            alert(`[ERROR] ${err.message}`);
+        }
+
+        console.log(err.config);
+    }
 
     export default {
         name: 'Dashboard',
-        components: {NewApartment},
         data() {
             return {
-                mapProps: {
-                    center: {
-                        lat: 0,
-                        lng: 0,
-                    },
-                    zoom: 2,
-                    infoWindowOptions: {
-                        pixelOffset: {
-                            width: 0,
-                            height: -35
-                        }
-                    }
-                },
-                rentals: [],
-                infoWindowPos: null,
-                infoWindowOpen: false,
-                infoContent: "",
+                deposits: [],
+                users: [],
 
-
-                filterData: {
-                    floorAreaMeters: null,
-                    pricePerMonthUSD: null,
-                    roomCount: null,
+                showModal: false,
+                showMenu: {
+                    endDate: false,
+                    startDate: false
                 },
 
-                userData: {
-                    username: null,
-                    role: null,
+                editedIndex: -1,
+                editedDeposit: {
+                    bankName: '',
+                    accountNumber: '',
+                    initialAmount: 0.0,
+                    yearlyInterest: 0.0,
+                    yearlyTax: 0.0,
+                    startDate: null,
+                    endDate: null,
+                    ownerId: 1,
                 },
 
-                allUsers: [],
-
-                showModal: false
+                defaultDeposit: {
+                    bankName: '',
+                    accountNumber: '',
+                    initialAmount: 0.0,
+                    yearlyInterest: 0.0,
+                    yearlyTax: 0.0,
+                    startDate: new Date(2018, 4, 20).toISOString().substr(0, 10),
+                    endDate: new Date(2018, 4, 21).toISOString().substr(0, 10),
+                    ownerId: 1,
+                },
             }
-        },
-
-        created() {
-            this.loadApartments();
-            this.loadUserData();
-            this.tryLoadingAllUsers();
         },
 
         computed: {
@@ -118,76 +201,43 @@
                 return $auth.isLoggedIn();
             },
 
-            markers() {
-                const m = [];
-                for (let s of this.rentals) {
-                    m.push({
-                        position: {
-                            lat: s.latitude,
-                            lng: s.longitude
-                        },
-                        infoText: `name: ${s.name}\n price: $ ${s.pricePerMonthUSD}`,
-                    });
-                }
-                return m;
+            fromTitle() {
+                return this.editedIndex === -1 ? "New User" : "Edit User";
             },
+        },
 
-            // Return a list of users formated for v-select
-            allAdminsAndRealtors() {
-                const realtors = [];
-                for (let u of this.allUsers) {
-                    if (u.role === "realtor" || u.role === "admin") {
-                        realtors.push({
-                            text: u.username,
-                            value: u.id
-                        });
-                    }
-                }
+        watch: {
+            dialog(val) {
+                val || this.close()
+            },
+        },
 
-                return realtors;
-            }
+        created() {
+            this.getAllDeposits();
+            this.getUserInfo();
+            this.tryLoadingAllUsers();
         },
 
         methods: {
-            toggleInfoWindow(marker, idx) {
-                this.infoWindowPos = marker.position;
-                this.infoContent = marker.infoText;
-                if (this.currentMidx === idx) {
-                    this.infoWindowOpen = !this.infoWindowOpen;
-                } else {
-                    this.infoWindowOpen = true;
-                    this.currentMidx = idx;
+            getAllDeposits() {
+                $deposits.loadAllDeposits().then(res => {
+                    console.log(res);
+                    this.assignIncomingDeposits(res);
+                    console.log(this.deposits);
+                }).catch(err => {
+                    alert(err);
+                });
+            },
+
+            assignIncomingDeposits(incoming) {
+                Vue.set(this.deposits, 'length', incoming.length);
+                for (let i = 0; i < incoming.length; i++) {
+                    // this.deposits.$set(i, incoming[i]);
+                    this.deposits.splice(i, 1, incoming[i]);
                 }
             },
 
-            panTo(lat, lng) {
-                this.$refs.mmm.panTo({
-                    lat: lat,
-                    lng: lng
-                });
-                this.mapProps.zoom = 5;
-            },
-
-            panOut() {
-                this.mapProps.center = {lat: 0, lng: 0};
-                this.mapProps.zoom = 2;
-            },
-
-
-            filterApartments() {
-                $rentals.loadAllApartments(this.filterData).then(res => {
-                    this.rentals = res;
-                    this.panOut();
-                });
-            },
-
-            loadApartments() {
-                $rentals.loadAllApartments({}).then(res => {
-                    this.rentals = res;
-                });
-            },
-
-            loadUserData() {
+            getUserInfo() {
                 $auth.getUserInfo().then(res => {
                     this.userData = res.data;
                 }).catch(err => {
@@ -203,112 +253,86 @@
                 })
             },
 
-            canCrudApartment() {
-                return this.userData.role === "admin" || this.userData.role === 'realtor';
+            close() {
+                this.showModal = false;
+                setTimeout(() => {
+                    this.editedDeposit = Object.assign({}, this.defaultDeposit);
+                    this.editedIndex = -1;
+                }, 300)
             },
 
-            toggleAvailability(apartment) {
-                $rentals.changeAvailability(apartment.id, !apartment.available).then(() => {
-                    this.loadApartments();
+            editDeposit(deposit) {
+                this.editedIndex = this.deposits.indexOf(deposit);
+                this.editedDeposit = Object.assign({}, deposit);
+                console.log(this.editedDeposit);
+                this.showModal = true;
+            },
+
+            save() {
+                if (this.editedIndex > -1) {
+                    const depositToUpdate = this.deposits[this.editedIndex];
+                    $deposits.updateDeposit(depositToUpdate.id, this.editedDeposit).then(res => {
+                            alert(`Deposit updated`);
+                            this.getAllDeposits();
+                            this.close();
+                        }
+                    ).catch(err => {
+                        handleError(err);
+                    });
+                } else {
+                    console.log(this.editedDeposit);
+                    $deposits.createDeposit(this.editedDeposit).then(
+                        _ => {
+                            alert(`Deposit created`);
+                            this.getAllDeposits();
+                            this.close();
+                        }
+                    ).catch(err => {
+                        handleError(err);
+                    });
+                }
+            },
+
+            deleteDeposit(depositId) {
+                $deposits.deleteDeposit(depositId).then(() => {
+                    this.getAllDeposits();
                 }).catch(err => {
                     alert(err)
                 });
             },
-
-            formatDate(strDate) {
-                const d = new Date(strDate);
-                return d.toLocaleDateString("en-us", {day: "numeric", month: "long", year: "numeric"});
-            }
         },
     }
 </script>
 
 <style scoped>
-  .dashboard {
-    display: grid;
-    grid-template-columns: 30% 70%;
-    height: 100vh;
-  }
+    .logout-link {
+        position: absolute;
+        top: 18px;
+        left: 170px;
+    }
 
-  .sidebar {
-    border-right: 1px solid rgba(0, 0, 0, 0.25);
-    overflow: hidden;
-    height: 100vh;
-  }
+    .accountNumber {
+        font-size: x-large;
+    }
 
+    .bankName {
+        color: gray;
+        font-size: small;
+        text-transform: uppercase;
+    }
 
-  h1 {
-    font-size: 22px;
-    margin: 0;
-    font-weight: 400;
-    line-height: 20px;
-    padding: 20px 2px;
-  }
+    .initialAmount {
+        color: gray;
+        font-size: small;
+    }
 
-  .heading {
-    display: grid;
-    border-bottom: 1px solid #eee;
-    grid-template-columns: 1fr 1fr;
-    min-height: 60px;
-    line-height: 60px;
-    padding: 0 10px;
-  }
+    .interest {
+        color: #5ad136;
+        font-size: small;
+    }
 
-  .sidebar .new-apartment {
-    justify-self: end;
-    text-align: center;
-    position: relative;
-    margin: .8rem .5rem;
-    right: 0;
-  }
-
-  .new-apartment-form {
-    display: grid;
-    grid-template-rows: repeat(auto-fit, 1fr);
-    row-gap: .3rem;
-    padding: .5rem;
-  }
-
-  .new-apartment-form > input, .new-apartment-form > button {
-    height: 2rem;
-    font-size: .9rem;
-    width: 100%;
-  }
-
-  .new-apartment-form > textarea {
-    height: 4rem;
-    font-size: .9rem;
-    width: 100%;
-  }
-
-  .filters-form {
-    display: grid;
-    grid-template-columns: repeat(3, 4fr) 1fr;
-  }
-
-  .filters-form > input {
-    width: 100%;
-  }
-
-  .logout-link {
-    position: absolute;
-    top: 18px;
-    left: 170px;
-  }
-
-  .listings {
-    height: 90%;
-    overflow: auto;
-  }
-
-  .listings .item {
-    display: block;
-    border-bottom: 1px solid #eee;
-    padding: 10px;
-    text-decoration: none;
-  }
-
-  .detail .desc {
-    color: #555;
-  }
+    .tax {
+        color: #ff6e45;
+        font-size: small;
+    }
 </style>

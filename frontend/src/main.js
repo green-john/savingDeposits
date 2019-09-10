@@ -9,6 +9,7 @@ import Dashboard from './components/Dashboard';
 import UserDashboard from './components/UsersDashboard';
 
 Vue.use(VueRouter);
+Vue.use(vuetify);
 
 function requireAuth(to, from, next) {
     if (!$auth.isLoggedIn()) {

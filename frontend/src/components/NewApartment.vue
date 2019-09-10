@@ -92,7 +92,7 @@
 </template>
 
 <script>
-    import $rentals from './rentals';
+    import $rentals from './deposits';
     import $users from "./users";
 
     export default {
@@ -132,10 +132,10 @@
                     this.newApartmentData.realtorId = this.userData.id;
                 }
 
-                $rentals.newApartment(this.newApartmentData).then(res => {
+                $rentals.createDeposit(this.newApartmentData).then(res => {
                     alert(`Apartment created with id ${res.id}`);
                     this.clearApartmentData();
-                    this.loadApartments();
+                    this.getAllDeposits();
                     this.showModal = false;
                 }).catch(err => {
                     this.newApartmentMessage = `Error: ${err}`;

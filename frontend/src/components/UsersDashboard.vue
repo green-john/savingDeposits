@@ -237,7 +237,7 @@
 <!--                });-->
 <!--            },-->
 
-<!--            loadUserData() {-->
+<!--            getUserInfo() {-->
 <!--                $auth.getUserInfo().then(res => {-->
 <!--                    this.userData = res.data;-->
 <!--                }).catch(err => {-->

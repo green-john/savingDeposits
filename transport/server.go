@@ -190,7 +190,7 @@ func getSavingsHandler(srv savingDeposits.DepositsService) func(w http.ResponseW
 func getAllSavingsHandler(srv savingDeposits.DepositsService) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var input savingDeposits.DepositFindInput
-		input.Query = r.URL.RawQuery
+		//input.Query = r.URL.RawQuery
 
 		result, err := srv.Find(input)
 		if err != nil {

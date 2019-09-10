@@ -56,7 +56,7 @@ func (ar *dbSavingsDepositService) Find(input savingDeposits.DepositFindInput) (
 	//	return nil, err
 	//}
 
-	//tx := ar.Db.New()
+	tx := ar.Db.New()
 	//for dbField, jsonTag := range JsonTagsToFilter {
 	//	if v, ok := values[jsonTag]; ok {
 	//		if !ok || len(v) == 0 {
@@ -68,9 +68,9 @@ func (ar *dbSavingsDepositService) Find(input savingDeposits.DepositFindInput) (
 	//	}
 	//}
 
-	//var SavingDeposits []savingDeposits.SavingDeposit
-	//tx.Find(&SavingDeposits)
-	return &savingDeposits.DepositFindOutput{}, nil
+	var deposits []savingDeposits.SavingDeposit
+	tx.Find(&deposits)
+	return &savingDeposits.DepositFindOutput{Deposits: deposits}, nil
 }
 
 func (ar *dbSavingsDepositService) Update(input savingDeposits.DepositUpdateInput) (*savingDeposits.DepositUpdateOutput, error) {

@@ -31,10 +31,10 @@ func runServer(testing bool, port int) {
 
 	authN := auth.NewDbAuthnService(db)
 	authZ := auth.NewAuthzService()
-	//apartmentsSrv := postgres.NewDbApartmentService(db)
+	depositsService := postgres.NewDbSavingDepositService(db)
 	userService := postgres.NewDbUserService(db)
 
-	srv, err := transport.NewServer(db, authN, authZ, userService)
+	srv, err := transport.NewServer(db, authN, authZ, depositsService, userService)
 	if err != nil {
 		_, _ = fmt.Fprintln(os.Stderr, "error creating server")
 		os.Exit(1)
