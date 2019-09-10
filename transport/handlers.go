@@ -1,7 +1,9 @@
 package transport
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
@@ -62,16 +64,16 @@ func patchUsersHandler(service savingDeposits.UserService) func(w http.ResponseW
 		vars := mux.Vars(r)
 		defer r.Body.Close()
 
-		var updateInput savingDeposits.UserUpdateInput
+		var input savingDeposits.UserUpdateInput
 
-		if err := json.NewDecoder(r.Body).Decode(&updateInput); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 			respond(w, http.StatusBadRequest, err.Error())
 			log.Println(err.Error())
 			return
 		}
 
-		updateInput.Id = vars["id"]
-		result, err := service.Update(updateInput)
+		input.Id = vars["id"]
+		result, err := service.Update(input)
 		if err != nil {
 			badRequestError(err, w)
 			return
@@ -100,9 +102,15 @@ func deleteUsersHandler(service savingDeposits.UserService) func(w http.Response
 
 func getDepositsHandler(srv savingDeposits.DepositsService) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
 		var input savingDeposits.DepositReadInput
+		vars := mux.Vars(r)
 		input.Id = vars["id"]
+		user, err := tryGetUserFromContext(r.Context())
+		if err != nil {
+			respond(w, http.StatusUnauthorized, err.Error())
+			return
+		}
+		input.User = *user
 
 		result, err := srv.Read(input)
 		if err != nil {
@@ -118,7 +126,13 @@ func getAllDepositsHandler(srv savingDeposits.DepositsService) func(w http.Respo
 	return func(w http.ResponseWriter, r *http.Request) {
 		var input savingDeposits.DepositFindInput
 		//input.Query = r.URL.RawQuery
+		user, err := tryGetUserFromContext(r.Context())
+		if err != nil {
+			respond(w, http.StatusUnauthorized, err.Error())
+			return
+		}
 
+		input.User = *user
 		result, err := srv.Find(input)
 		if err != nil {
 			respond(w, http.StatusBadRequest, err.Error())
@@ -132,13 +146,21 @@ func getAllDepositsHandler(srv savingDeposits.DepositsService) func(w http.Respo
 func postDepositsHandler(srv savingDeposits.DepositsService) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
-		var newDeposits savingDeposits.SavingDeposit
-		if err := json.NewDecoder(r.Body).Decode(&newDeposits); err != nil {
+		var input savingDeposits.DepositCreateInput
+
+		if err := json.NewDecoder(r.Body).Decode(&input.SavingDeposit); err != nil {
 			respond(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		result, err := srv.Create(savingDeposits.DespositCreateInput{SavingDeposit: newDeposits})
+		user, err := tryGetUserFromContext(r.Context())
+		if err != nil {
+			respond(w, http.StatusUnauthorized, err.Error())
+			return
+		}
+		input.User = *user
+
+		result, err := srv.Create(input)
 		if err != nil {
 			badRequestError(err, w)
 			return
@@ -150,19 +172,25 @@ func postDepositsHandler(srv savingDeposits.DepositsService) func(w http.Respons
 
 func patchDepositsHandler(srv savingDeposits.DepositsService) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
 		defer r.Body.Close()
 
-		var updateInput savingDeposits.DepositUpdateInput
+		var input savingDeposits.DepositUpdateInput
+		vars := mux.Vars(r)
+		input.Id = vars["id"]
 
-		if err := json.NewDecoder(r.Body).Decode(&updateInput.Data); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&input.Data); err != nil {
 			respond(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		updateInput.Id = vars["id"]
+		user, err := tryGetUserFromContext(r.Context())
+		if err != nil {
+			respond(w, http.StatusForbidden, err.Error())
+			return
+		}
+		input.User = *user
 
-		result, err := srv.Update(updateInput)
+		result, err := srv.Update(input)
 		if err != nil {
 			badRequestError(err, w)
 			return
@@ -174,12 +202,25 @@ func patchDepositsHandler(srv savingDeposits.DepositsService) func(w http.Respon
 
 func deleteDepositsHandler(srv savingDeposits.DepositsService) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var deleteIn savingDeposits.DepositDeleteInput
+		var input savingDeposits.DepositDeleteInput
+
+		user, err := tryGetUserFromContext(r.Context())
+		if err != nil {
+			respond(w, http.StatusUnauthorized, err.Error())
+			return
+		}
 
 		vars := mux.Vars(r)
-		deleteIn.Id = vars["id"]
-		_, err := srv.Delete(deleteIn)
+		input.Id = vars["id"]
+		input.User = *user
+
+		_, err = srv.Delete(input)
 		if err != nil {
+			if err == savingDeposits.NotAuthorizedError {
+				respond(w, http.StatusForbidden, err.Error())
+				return
+			}
+
 			badRequestError(err, w)
 			return
 		}
@@ -196,4 +237,17 @@ func badRequestError(err error, w http.ResponseWriter) {
 	default:
 		respond(w, http.StatusBadRequest, err.Error())
 	}
+}
+
+func tryGetUserFromContext(ctx context.Context) (*savingDeposits.User, error) {
+	userRaw := ctx.Value("authUser")
+	if userRaw == nil {
+		return nil, errors.New("user must be authenticated")
+	}
+
+	user, ok := userRaw.(*savingDeposits.User)
+	if !ok {
+		return nil, errors.New("error fetching authenticated user")
+	}
+	return user, nil
 }

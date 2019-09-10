@@ -30,7 +30,7 @@ type depositResponse struct {
 	OwnerId        uint    `json:"ownerId"`
 }
 
-func TestCRUDApartment(t *testing.T) {
+func TestCRUDDeposits(t *testing.T) {
 	var wg sync.WaitGroup
 	const addr = "localhost:8083"
 	srv, clean := newServer(t)
@@ -49,7 +49,7 @@ func TestCRUDApartment(t *testing.T) {
 	managerId, err := createUser("manager", "manager", "manager", srv.Db)
 	tst.Ok(t, err)
 
-	t.Run("CRUD apartment no auth, fail", func(t *testing.T) {
+	t.Run("CRUD deposits no auth, fail", func(t *testing.T) {
 		res, err := tst.MakeRequest("POST", serverUrl+"/deposits", "", []byte(""))
 		tst.Ok(t, err)
 
@@ -77,31 +77,31 @@ func TestCRUDApartment(t *testing.T) {
 			fmt.Sprintf("Expected 401, got %d", res.StatusCode))
 	})
 
-	t.Run("Create Update Delete apartment with manager, fail", func(t *testing.T) {
+	t.Run("Create Update Delete deposit with manager, fail", func(t *testing.T) {
 		token, err := getUserToken(t, serverUrl, "manager", "manager")
 		tst.Ok(t, err)
-		newApartmentPayload := newDepositPayload("El Banco", "EB012", managerId)
+		newDepositPayload := newDepositPayload("El Banco", "EB012", managerId)
 
-		res, err := tst.MakeRequest("POST", serverUrl+"/deposits", token, newApartmentPayload)
+		res, err := tst.MakeRequest("POST", serverUrl+"/deposits", token, newDepositPayload)
 		tst.Ok(t, err)
 
 		tst.True(t, res.StatusCode == http.StatusForbidden,
 			fmt.Sprintf("Expected 403 got %d", res.StatusCode))
 
-		res, err = tst.MakeRequest("PATCH", serverUrl+"/deposits/1", token, newApartmentPayload)
+		res, err = tst.MakeRequest("PATCH", serverUrl+"/deposits/1", token, newDepositPayload)
 		tst.Ok(t, err)
 
 		tst.True(t, res.StatusCode == http.StatusForbidden,
 			fmt.Sprintf("Expected 403 got %d", res.StatusCode))
 
-		res, err = tst.MakeRequest("DELETE", serverUrl+"/deposits/1", token, newApartmentPayload)
+		res, err = tst.MakeRequest("DELETE", serverUrl+"/deposits/1", token, newDepositPayload)
 		tst.Ok(t, err)
 
 		tst.True(t, res.StatusCode == http.StatusForbidden,
 			fmt.Sprintf("Expected 403 got %d", res.StatusCode))
 	})
 
-	t.Run("CRUD apartment admin, success", func(t *testing.T) {
+	t.Run("CRUD deposits admin, success", func(t *testing.T) {
 		// Get user token
 		token, err := getUserToken(t, serverUrl, "admin", "admin")
 		tst.Ok(t, err)
@@ -186,7 +186,7 @@ func TestCRUDApartment(t *testing.T) {
 	})
 }
 
-func TestCreateAndReadApartmentsWithRegularUser(t *testing.T) {
+func TestCreateAndReadDepositsWithRegularUser(t *testing.T) {
 	var wg sync.WaitGroup
 	const addr = "localhost:8083"
 	srv, clean := newServer(t)
@@ -316,7 +316,7 @@ func createDeposit(bankName string, initialAmount float64, endDate string, owner
 	}
 
 	output, err := depositsService.Create(
-		savingDeposits.DespositCreateInput{
+		savingDeposits.DepositCreateInput{
 			SavingDeposit: savingDeposits.SavingDeposit{
 				BankName:       bankName,
 				AccountNumber:  "no" + bankName,
@@ -327,6 +327,8 @@ func createDeposit(bankName string, initialAmount float64, endDate string, owner
 				EndDate:        strEndDate,
 				OwnerId:        ownerId,
 			},
+
+			User: savingDeposits.User{Role: "admin"},
 		})
 
 	if err != nil {

@@ -2,18 +2,20 @@ package postgres
 
 import (
 	libErrors "errors"
+	"fmt"
 	"github.com/jinzhu/gorm"
+	"net/url"
 	"reflect"
 	"savingDeposits"
 	"strconv"
 	"time"
 )
 
-//var JsonTagsToFilter = map[string]string{
-//	"floor_area_meters":   getJsonTag(savingDeposits.SavingDeposit{}, "FloorAreaMeters"),
-//	"price_per_month_usd": getJsonTag(savingDeposits.SavingDeposit{}, "PricePerMonthUsd"),
-//	"room_count":          getJsonTag(savingDeposits.SavingDeposit{}, "RoomCount"),
-//}
+var dbNameToJsonField = map[string]string{
+	"start_date": getJsonTag(savingDeposits.SavingDeposit{}, "StartDate"),
+	"end_date":   getJsonTag(savingDeposits.SavingDeposit{}, "EndDate"),
+	"bank_name":  getJsonTag(savingDeposits.SavingDeposit{}, "BankName"),
+}
 
 type dbSavingsDepositService struct {
 	Db *gorm.DB
@@ -28,76 +30,143 @@ func turnIntoOneError(errors []error) error {
 	return libErrors.New("[dbError]" + finalErr)
 }
 
-func (ar *dbSavingsDepositService) Create(in savingDeposits.DespositCreateInput) (*savingDeposits.DepositCreateOutput, error) {
-	err := in.Validate()
+func (ar *dbSavingsDepositService) Create(input savingDeposits.DepositCreateInput) (*savingDeposits.DepositCreateOutput, error) {
+	err := input.Validate()
 	if err != nil {
 		return nil, err
 	}
-	errors := ar.Db.Create(&(in.SavingDeposit)).GetErrors()
+
+	errors := ar.Db.Create(&(input.SavingDeposit)).GetErrors()
 	if len(errors) > 0 {
 		return nil, turnIntoOneError(errors)
 	}
 
-	return &savingDeposits.DepositCreateOutput{SavingDeposit: in.SavingDeposit}, nil
+	user := input.User
+	if user.Role != "admin" && uint(user.ID) != input.SavingDeposit.OwnerId {
+		return nil, savingDeposits.NotAuthorizedError
+	}
+
+	return &savingDeposits.DepositCreateOutput{SavingDeposit: input.SavingDeposit}, nil
 }
 
-func (ar *dbSavingsDepositService) Read(in savingDeposits.DepositReadInput) (*savingDeposits.DepositReadOutput, error) {
-	SavingDeposit, err := getSavingDeposit(in.Id, ar.Db)
+func (ar *dbSavingsDepositService) Read(input savingDeposits.DepositReadInput) (*savingDeposits.DepositReadOutput, error) {
+	deposit, err := getSavingDeposit(input.Id, ar.Db)
 	if err != nil {
 		return nil, err
 	}
 
-	return &savingDeposits.DepositReadOutput{SavingDeposit: *SavingDeposit}, nil
+	if !canPerformAction(input.User, deposit) {
+		return nil, savingDeposits.NotAuthorizedError
+	}
+
+	return &savingDeposits.DepositReadOutput{SavingDeposit: *deposit}, nil
 }
 
 func (ar *dbSavingsDepositService) Find(input savingDeposits.DepositFindInput) (*savingDeposits.DepositFindOutput, error) {
-	//values, err := url.ParseQuery(input.Query)
-	//if err != nil {
-	//	return nil, err
-	//}
+	values, err := url.ParseQuery(input.Query)
+	println(values)
+	if err != nil {
+		return nil, err
+	}
 
 	tx := ar.Db.New()
-	//for dbField, jsonTag := range JsonTagsToFilter {
-	//	if v, ok := values[jsonTag]; ok {
-	//		if !ok || len(v) == 0 {
-	//			continue
-	//		}
-	//
-	//		// TODO potential for injection here
-	//		tx = tx.Where(fmt.Sprintf("%s = ?", dbField), v[0])
-	//	}
-	//}
+
+	for dbField, jsonTag := range dbNameToJsonField {
+		if v, ok := values[jsonTag]; ok {
+			if !ok || len(v) == 0 {
+				continue
+			}
+
+			// TODO potential for injection here
+			tx = tx.Where(fmt.Sprintf("%s = ?", dbField), v[0])
+		}
+	}
+
+	if v, ok := values["minAmount"]; ok {
+		tx, err = amountGreaterThan(tx, v[0])
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if v, ok := values["maxAmount"]; ok {
+		tx, err = amountLessThan(tx, v[0])
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	user := input.User
+	if user.Role != "admin" {
+		tx = tx.Where("owner_id = ?", user.ID)
+	}
 
 	var deposits []savingDeposits.SavingDeposit
 	tx.Find(&deposits)
 	return &savingDeposits.DepositFindOutput{Deposits: deposits}, nil
 }
 
-func (ar *dbSavingsDepositService) Update(input savingDeposits.DepositUpdateInput) (*savingDeposits.DepositUpdateOutput, error) {
-	SavingDeposit, err := getSavingDeposit(input.Id, ar.Db)
+func amountGreaterThan(tx *gorm.DB, strAmount string) (*gorm.DB, error) {
+	amount, err := strconv.ParseFloat(strAmount, 64)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := updateFields(SavingDeposit, input.Data); err != nil {
+	return tx.Where("initial_amount >= ?", amount), nil
+}
+
+func amountLessThan(tx *gorm.DB, strAmount string) (*gorm.DB, error) {
+	amount, err := strconv.ParseFloat(strAmount, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	return tx.Where("initial_amount <= ?", amount), nil
+}
+
+func (ar *dbSavingsDepositService) Update(input savingDeposits.DepositUpdateInput) (*savingDeposits.DepositUpdateOutput, error) {
+	deposit, err := getSavingDeposit(input.Id, ar.Db)
+	if err != nil {
+		return nil, err
+	}
+
+	if !canPerformAction(input.User, deposit) {
+		return nil, savingDeposits.NotAuthorizedError
+	}
+
+	if err := updateFields(deposit, input.Data); err != nil {
 		return nil, err
 	}
 
 	// Save to DB
-	if err = ar.Db.Save(&SavingDeposit).Error; err != nil {
+	if err = ar.Db.Save(&deposit).Error; err != nil {
 		return nil, err
 	}
-	return &savingDeposits.DepositUpdateOutput{SavingDeposit: *SavingDeposit}, nil
+	return &savingDeposits.DepositUpdateOutput{SavingDeposit: *deposit}, nil
 }
 
 func (ar *dbSavingsDepositService) Delete(input savingDeposits.DepositDeleteInput) (*savingDeposits.DepositDeleteOutput, error) {
-	SavingDeposit, err := getSavingDeposit(input.Id, ar.Db)
+	deposit, err := getSavingDeposit(input.Id, ar.Db)
 	if err != nil {
 		return nil, err
 	}
 
-	ar.Db.Delete(&SavingDeposit)
+	if !canPerformAction(input.User, deposit) {
+		return nil, savingDeposits.NotAuthorizedError
+	}
+
+	ar.Db.Delete(&deposit)
 	return &savingDeposits.DepositDeleteOutput{Message: "success"}, nil
+}
+
+func canPerformAction(user savingDeposits.User, deposit *savingDeposits.SavingDeposit) bool {
+	// Admins can do everything
+	if user.Role == "admin" {
+		return true
+	}
+
+	// Otherwise only owners
+	return uint(user.ID) == deposit.OwnerId
 }
 
 func getSavingDeposit(id string, db *gorm.DB) (*savingDeposits.SavingDeposit, error) {

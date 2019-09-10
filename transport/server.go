@@ -59,11 +59,11 @@ func (s *Server) AddDepositsHandlers(basePath string) {
 
 	fmt.Println(url, urlWithId)
 
-	s.router.HandleFunc(url, postSavingsHandler(s.DepositsService)).Methods("POST")
-	s.router.HandleFunc(url, getAllSavingsHandler(s.DepositsService)).Methods("GET")
-	s.router.HandleFunc(urlWithId, getSavingsHandler(s.DepositsService)).Methods("GET")
-	s.router.HandleFunc(urlWithId, patchSavingsHandler(s.DepositsService)).Methods("PATCH")
-	s.router.HandleFunc(urlWithId, deleteSavingsHandler(s.DepositsService)).Methods("DELETE")
+	s.router.HandleFunc(url, postDepositsHandler(s.DepositsService)).Methods("POST")
+	s.router.HandleFunc(url, getAllDepositsHandler(s.DepositsService)).Methods("GET")
+	s.router.HandleFunc(urlWithId, getDepositsHandler(s.DepositsService)).Methods("GET")
+	s.router.HandleFunc(urlWithId, patchDepositsHandler(s.DepositsService)).Methods("PATCH")
+	s.router.HandleFunc(urlWithId, deleteDepositsHandler(s.DepositsService)).Methods("DELETE")
 }
 
 // Creates GET, POST, PATH and DELETE user handlers.

@@ -117,7 +117,7 @@ func isFraction(n float64) bool {
 	return n >= 0 && n <= 1.0
 }
 
-type DespositCreateInput struct {
+type DepositCreateInput struct {
 	SavingDeposit
 
 	// Auth user
@@ -179,7 +179,7 @@ type DepositDeleteOutput struct {
 }
 
 type DepositsService interface {
-	Create(DespositCreateInput) (*DepositCreateOutput, error)
+	Create(DepositCreateInput) (*DepositCreateOutput, error)
 	Read(DepositReadInput) (*DepositReadOutput, error)
 	Find(DepositFindInput) (*DepositFindOutput, error)
 	Update(DepositUpdateInput) (*DepositUpdateOutput, error)

@@ -34,6 +34,8 @@ func (s *Server) AuthMiddleware(next http.Handler) http.Handler {
 			respond(w, http.StatusUnauthorized, "Not allowed")
 			return
 		}
+		// Save user in context
+		ctx := context.WithValue(r.Context(), "authUser", user)
 
 		// Try to get the requested resource from the url.
 		// If not users or apartments, then it should be login/createUser
@@ -50,7 +52,6 @@ func (s *Server) AuthMiddleware(next http.Handler) http.Handler {
 			}
 		}
 
-		ctx := context.WithValue(r.Context(), "authUser", user)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
