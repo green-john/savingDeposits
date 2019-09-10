@@ -36,5 +36,8 @@ export default {
 
     isLoggedIn() {
         return !!localStorage.token;
+    },
+
+    isAdmin() {
     }
 };

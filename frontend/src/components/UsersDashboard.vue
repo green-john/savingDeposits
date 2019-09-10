@@ -1,7 +1,7 @@
 <template>
     <v-data-table
-            :headers="users.headers"
-            :items="users.data"
+            :headers="headers"
+            :items="users"
             sort-by="users"
             class="elevation-1"
     >
@@ -14,7 +14,15 @@
                         vertical
                 ></v-divider>
                 <v-toolbar-title>
-                    <router-link class="logout-link" v-if="loggedIn" to="/logout">Log out</router-link>
+                    <router-link to="/dashboard">Dashboard</router-link>
+                </v-toolbar-title>
+                <v-divider
+                        class="mx-4"
+                        inset
+                        vertical
+                ></v-divider>
+                <v-toolbar-title>
+                    <router-link to="/logout">Log out</router-link>
                 </v-toolbar-title>
                 <v-divider
                         class="mx-4"
@@ -75,6 +83,7 @@
 </template>
 
 <script>
+    import Vue from "vue";
     import $users from "./users";
     import $auth from "./auth";
 
@@ -94,18 +103,16 @@
     export default {
         data: () => ({
             dialog: false,
-            users: {
-                headers: [
-                    {
-                        text: 'Username',
-                        align: 'left',
-                        value: 'username',
-                    },
-                    {text: 'Role', value: 'role'},
-                    {text: 'Actions', value: 'action', sortable: false},
-                ],
-                data: []
-            },
+            headers: [
+                {
+                    text: 'Username',
+                    align: 'left',
+                    value: 'username',
+                },
+                {text: 'Role', value: 'role'},
+                {text: 'Actions', value: 'action', sortable: false},
+            ],
+            users: [],
             editedIndex: -1,
             editedUser: {
                 username: '',
@@ -137,12 +144,18 @@
         },
 
         methods: {
+            assignIncomingUsers(incoming) {
+                Vue.set(this.users, 'length', incoming.length);
+                for (let i = 0; i < incoming.length; i++) {
+                    this.users.splice(i, 1, incoming[i]);
+                }
+            },
+
             getAllUsers() {
-                // $users.getAllUsers().then(res => {
-                //     this.users.data = res;
-                //     this.$forceUpdate();
-                // });
-                this.users.data.push({username: 'john', role: 'peters', id: 1000});
+                $users.getAllUsers().then(res => {
+                    console.log(res);
+                    this.assignIncomingUsers(res);
+                });
             },
 
             editItem(item) {
@@ -154,11 +167,12 @@
 
             deleteItem(user) {
                 if (confirm('Are you sure you want to delete this user?')) {
-                    $users.deleteUser(user.id).catch(err => {
+                    $users.deleteUser(user.id).then(() => {
+                        this.getAllUsers();
+                    }).catch(err => {
                         handleError(err);
                     });
                 }
-                this.getAllUsers();
             },
 
             close() {
@@ -177,6 +191,8 @@
                     $users.updateUser(userToUpdate.id, this.editedUser.username, this.editedUser.password,
                         this.editedUser.role).then(res => {
                             alert(`User (id=${res.id}) '${res.username}' updated`);
+                            this.getAllUsers();
+                            this.close();
                         }
                     ).catch(err => {
                         handleError(err);
@@ -185,13 +201,13 @@
                     $users.createUser(this.editedUser.username, this.editedUser.password, this.editedUser.role).then(
                         res => {
                             alert(`User (id=${res.id}) '${res.username}' created`);
+                            this.getAllUsers();
+                            this.close();
                         }
                     ).catch(err => {
                         handleError(err);
                     });
                 }
-                this.getAllUsers();
-                this.close();
             },
         },
     }

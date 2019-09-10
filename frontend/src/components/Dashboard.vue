@@ -1,10 +1,36 @@
 <template>
     <div class="wrapper">
-        <v-toolbar flat>
+        <v-toolbar flat v-if="loggedIn">
+            <v-toolbar-title>Dashboard</v-toolbar-title>
+            <v-divider
+                    class="mx-4"
+                    inset
+                    vertical
+            ></v-divider>
             <v-toolbar-title>
-                Dashboard
-                <router-link class="logout-link" v-if="loggedIn" to="/logout">Log out</router-link>
+                <router-link v-if="isAdmin" to="/users">Users</router-link>
             </v-toolbar-title>
+            <v-divider
+                    class="mx-4"
+                    inset
+                    vertical
+            ></v-divider>
+            <v-toolbar-title>
+                <router-link to="/report">Report</router-link>
+            </v-toolbar-title>
+            <v-divider
+                    class="mx-4"
+                    inset
+                    vertical
+            ></v-divider>
+            <v-toolbar-title>
+                <router-link to="/logout">Log out</router-link>
+            </v-toolbar-title>
+            <v-divider
+                    class="mx-4"
+                    inset
+                    vertical
+            ></v-divider>
             <div class="flex-grow-1"></div>
             <v-dialog v-on:click:outside="close()" v-model="showModal" max-width="500px"
                       v-on:keydown.esc="close()">
@@ -31,51 +57,10 @@
                                                   label="Initial amount" type="number"></v-text-field>
                                 </v-col>
                                 <v-col cols="12" sm="6" md="4">
-                                    <v-menu
-                                            v-model="showMenu.startDate"
-                                            :close-on-content-click="false"
-                                            :nudge-right="40"
-                                            transition="scale-transition"
-                                            offset-y
-                                            min-width="290px"
-                                    >
-                                        <template v-slot:activator="{ on }">
-                                            <v-text-field
-                                                    v-model="editedDeposit.startDate"
-                                                    label="Start date"
-                                                    prepend-icon="event"
-                                                    readonly
-                                                    v-on="on"
-                                            ></v-text-field>
-                                        </template>
-                                        <v-date-picker v-model="editedDeposit.startDate"
-                                                       @input="showMenu.startDate = false">
-
-                                        </v-date-picker>
-                                    </v-menu>
+                                    <DatePicker v-model="editedDeposit.startDate"></DatePicker>
                                 </v-col>
                                 <v-col cols="12" sm="6" md="4">
-                                    <v-menu
-                                            v-model="showMenu.endDate"
-                                            :close-on-content-click="false"
-                                            :nudge-right="40"
-                                            transition="scale-transition"
-                                            offset-y
-                                            min-width="290px"
-                                    >
-                                        <template v-slot:activator="{ on }">
-                                            <v-text-field
-                                                    v-model="editedDeposit.endDate"
-                                                    label="End Date"
-                                                    prepend-icon="event"
-                                                    readonly
-                                                    v-on="on"
-                                            ></v-text-field>
-                                        </template>
-                                        <v-date-picker v-model="editedDeposit.endDate"
-                                                       @input="showMenu.endDate = false">
-                                        </v-date-picker>
-                                    </v-menu>
+                                    <DatePicker v-model="editedDeposit.endDate"></DatePicker>
                                 </v-col>
                                 <v-col cols="12" sm="6" md="4">
                                     <v-text-field v-model.number="editedDeposit.yearlyInterest"
@@ -98,8 +83,34 @@
             </v-dialog>
         </v-toolbar>
 
+        <v-container class="pa-0 ml-5 mt-3">
+            <v-row no-gutters>
+                <v-col cols="2">
+                    <v-text-field v-model.number="filters.minAmount"
+                                  label="Min Amount" type="number"></v-text-field>
+                </v-col>
+                <v-col cols="2">
+                    <v-text-field v-model.number="filters.maxAmount"
+                                  label="Max Amount" type="number"></v-text-field>
+                </v-col>
+                <v-col cols="2">
+                    <v-text-field v-model="filters.bankName"
+                                  label="Bank Name"></v-text-field>
+                </v-col>
+                <v-col cols="2">
+                    <DatePicker v-model="filters.startDate"></DatePicker>
+                </v-col>
+                <v-col cols="2">
+                    <DatePicker v-model="filters.endDate"></DatePicker>
+                </v-col>
 
-        <div class="deposits">
+                <v-col cols="2">
+                    <v-btn @click="filterData()">Filter</v-btn>
+                </v-col>
+            </v-row>
+        </v-container>
+
+        <v-container class="deposits">
             <v-card outlined v-for="deposit of deposits" :key="deposit.id">
                 <v-row no-gutters class="ml-6 mt-4">
                     <v-col sm="2" md="2" class="overline">From {{ deposit.startDate }}</v-col>
@@ -132,15 +143,15 @@
                     <v-btn outlined text @click="deleteDeposit(deposit.id)">Delete</v-btn>
                 </v-card-actions>
             </v-card>
-        </div>
-
+        </v-container>
 
     </div>
 </template>
 
 
 <script>
-    import Vue from 'vue'
+    import Vue from 'vue';
+    import DatePicker from "./helpers/DatePicker";
     import $auth from "./auth";
     import $deposits from './deposits';
     import $users from "./users";
@@ -160,10 +171,12 @@
 
     export default {
         name: 'Dashboard',
+        components: {DatePicker},
         data() {
             return {
                 deposits: [],
                 users: [],
+                userData: {},
 
                 showModal: false,
                 showMenu: {
@@ -183,6 +196,14 @@
                     ownerId: 1,
                 },
 
+                filters: {
+                    bankName: '',
+                    minAmount: 0.0,
+                    maxAmount: 0.0,
+                    startDate: "",
+                    endDate: ""
+                },
+
                 defaultDeposit: {
                     bankName: '',
                     accountNumber: '',
@@ -199,6 +220,10 @@
         computed: {
             loggedIn() {
                 return $auth.isLoggedIn();
+            },
+
+            isAdmin() {
+                return this.userData.role === "admin";
             },
 
             fromTitle() {
@@ -220,7 +245,7 @@
 
         methods: {
             getAllDeposits() {
-                $deposits.loadAllDeposits().then(res => {
+                $deposits.loadAllDeposits({}).then(res => {
                     console.log(res);
                     this.assignIncomingDeposits(res);
                     console.log(this.deposits);
@@ -300,17 +325,15 @@
                     alert(err)
                 });
             },
+
+            filterData() {
+                $deposits.loadAllDeposits(this.filters);
+            },
         },
     }
 </script>
 
 <style scoped>
-    .logout-link {
-        position: absolute;
-        top: 18px;
-        left: 170px;
-    }
-
     .accountNumber {
         font-size: x-large;
     }

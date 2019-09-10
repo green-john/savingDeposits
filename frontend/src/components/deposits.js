@@ -2,19 +2,28 @@ import {$http} from "./http";
 import $auth from "./auth";
 
 export default {
-    loadAllDeposits() {
+    loadAllDeposits(filters) {
         let finalUrl = '/deposits';
-        // if (filters.floorAreaMeters) {
-        //     finalUrl += `floorAreaMeters=${filters.floorAreaMeters}&`;
-        // }
-        //
-        // if (filters.pricePerMonthUSD) {
-        //     finalUrl += `pricePerMonthUSD=${filters.pricePerMonthUSD}&`;
-        // }
-        //
-        // if (filters.roomCount) {
-        //     finalUrl += `roomCount=${filters.roomCount}`;
-        // }
+
+        if (filters.minAmount) {
+            finalUrl += `minAmount=${filters.minAmount}&`;
+        }
+
+        if (filters.maxAmount) {
+            finalUrl += `maxAmount=${filters.maxAmount}&`;
+        }
+
+        if (filters.bankName) {
+            finalUrl += `bankName=${filters.bankName}&`;
+        }
+
+        if (filters.startDate) {
+            finalUrl += `startDate=${filters.startDate}&`;
+        }
+
+        if (filters.endDate) {
+            finalUrl += `endDate=${filters.endDate}&`;
+        }
 
         return $http.get(
             finalUrl, {
