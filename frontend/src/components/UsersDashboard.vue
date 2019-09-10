@@ -7,7 +7,7 @@
     >
         <template v-slot:top>
             <v-toolbar flat color="white">
-                <v-toolbar-title>Query users</v-toolbar-title>
+                <v-toolbar-title>Users</v-toolbar-title>
                 <v-divider
                         class="mx-4"
                         inset

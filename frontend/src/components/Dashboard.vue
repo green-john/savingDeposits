@@ -8,20 +8,20 @@
                     vertical
             ></v-divider>
             <v-toolbar-title>
-                <router-link v-if="isAdmin" to="/users">Users</router-link>
-            </v-toolbar-title>
-            <v-divider
-                    class="mx-4"
-                    inset
-                    vertical
-            ></v-divider>
-            <v-toolbar-title>
                 <router-link to="/report">Report</router-link>
             </v-toolbar-title>
             <v-divider
                     class="mx-4"
                     inset
                     vertical
+            ></v-divider>
+            <v-toolbar-title v-if="isAdmin">
+                <router-link to="/users">Users</router-link>
+            </v-toolbar-title>
+            <v-divider v-if="isAdmin"
+                       class="mx-4"
+                       inset
+                       vertical
             ></v-divider>
             <v-toolbar-title>
                 <router-link to="/logout">Log out</router-link>
@@ -84,7 +84,7 @@
         </v-toolbar>
 
         <v-container class="pa-0 ml-5 mt-3">
-            <v-row no-gutters>
+            <v-row align="center" no-gutters>
                 <v-col cols="2">
                     <v-text-field v-model.number="filters.minAmount"
                                   label="Min Amount" type="number"></v-text-field>
@@ -104,8 +104,12 @@
                     <DatePicker v-model="filters.endDate"></DatePicker>
                 </v-col>
 
-                <v-col cols="2">
-                    <v-btn @click="filterData()">Filter</v-btn>
+                <v-col cols="1">
+                    <v-btn class="mb-2 ml-2" @click="filterData()">Filter</v-btn>
+                </v-col>
+
+                <v-col cols="1">
+                    <v-btn class="mb-2 ml-2" @click="resetData()">Reset</v-btn>
                 </v-col>
             </v-row>
         </v-container>
@@ -150,7 +154,6 @@
 
 
 <script>
-    import Vue from 'vue';
     import DatePicker from "./helpers/DatePicker";
     import $auth from "./auth";
     import $deposits from './deposits';
@@ -238,28 +241,20 @@
         },
 
         created() {
-            this.getAllDeposits();
+            this.getAllDeposits({});
             this.getUserInfo();
             this.tryLoadingAllUsers();
         },
 
         methods: {
-            getAllDeposits() {
-                $deposits.loadAllDeposits({}).then(res => {
+            getAllDeposits(filters) {
+                $deposits.loadAllDeposits(filters).then(res => {
                     console.log(res);
-                    this.assignIncomingDeposits(res);
+                    this.deposits = res;
                     console.log(this.deposits);
                 }).catch(err => {
                     alert(err);
                 });
-            },
-
-            assignIncomingDeposits(incoming) {
-                Vue.set(this.deposits, 'length', incoming.length);
-                for (let i = 0; i < incoming.length; i++) {
-                    // this.deposits.$set(i, incoming[i]);
-                    this.deposits.splice(i, 1, incoming[i]);
-                }
             },
 
             getUserInfo() {
@@ -326,7 +321,11 @@
             },
 
             filterData() {
-                $deposits.loadAllDeposits(this.filters);
+                this.getAllDeposits(this.filters);
+            },
+
+            resetData() {
+                this.getAllDeposits({});
             },
         },
     }

@@ -86,10 +86,12 @@ places where routes are added. (Almost done)
 
 - ~Frontend to CRUD deposits.~
 - ~Frontend to search deposits~
-- Frontend for report.
-- Backend search.
+- ~Frontend for report.~
+- ~Backend search.~
+- ~Fix permissions for getting deposits for a user.~
 - Backend report.
 - Fix rates to be any number not just decimal
 - Vselect for users.
-- Fix permissions for getting deposits for a user.
+- Display owner for admins
+
 

@@ -3,7 +3,7 @@ import $auth from "./auth";
 
 export default {
     loadAllDeposits(filters) {
-        let finalUrl = '/deposits';
+        let finalUrl = '/deposits?';
 
         if (filters.minAmount) {
             finalUrl += `minAmount=${filters.minAmount}&`;

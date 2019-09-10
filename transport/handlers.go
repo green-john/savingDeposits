@@ -125,7 +125,7 @@ func getDepositsHandler(srv savingDeposits.DepositsService) func(w http.Response
 func getAllDepositsHandler(srv savingDeposits.DepositsService) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var input savingDeposits.DepositFindInput
-		//input.Query = r.URL.RawQuery
+		input.Query = r.URL.RawQuery
 		user, err := tryGetUserFromContext(r.Context())
 		if err != nil {
 			respond(w, http.StatusUnauthorized, err.Error())

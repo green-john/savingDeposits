@@ -96,23 +96,9 @@
 
 
 <script>
-    import Vue from 'vue';
     import DatePicker from "./helpers/DatePicker";
     import $auth from "./auth";
     import $deposits from './deposits';
-
-    function handleError(err) {
-        if (err.response) {
-            console.log(err.response.status);
-            alert(`[ERROR] ${err.response.data}`);
-        } else if (err.request) {
-            alert(`[ERROR] ${err.request}`);
-        } else {
-            alert(`[ERROR] ${err.message}`);
-        }
-
-        console.log(err.config);
-    }
 
     export default {
         name: 'Dashboard',
@@ -149,7 +135,7 @@
 
         methods: {
             positiveBalance(deposit) {
-                return true;
+                return deposit > 0;
             },
 
             getReport() {
@@ -159,19 +145,11 @@
             getAllDeposits() {
                 $deposits.loadAllDeposits({}).then(res => {
                     console.log(res);
-                    this.assignIncomingDeposits(res);
+                    this.deposits = res;
                     console.log(this.deposits);
                 }).catch(err => {
                     alert(err);
                 });
-            },
-
-            assignIncomingDeposits(incoming) {
-                Vue.set(this.deposits, 'length', incoming.length);
-                for (let i = 0; i < incoming.length; i++) {
-                    // this.deposits.$set(i, incoming[i]);
-                    this.deposits.splice(i, 1, incoming[i]);
-                }
             },
         },
     }

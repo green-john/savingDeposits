@@ -64,7 +64,6 @@ func (ar *dbSavingsDepositService) Read(input savingDeposits.DepositReadInput) (
 
 func (ar *dbSavingsDepositService) Find(input savingDeposits.DepositFindInput) (*savingDeposits.DepositFindOutput, error) {
 	values, err := url.ParseQuery(input.Query)
-	println(values)
 	if err != nil {
 		return nil, err
 	}
