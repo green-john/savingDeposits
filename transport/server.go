@@ -1,12 +1,10 @@
 package transport
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/jinzhu/gorm"
-	"log"
 	"net/http"
 	"savingDeposits"
 	"savingDeposits/auth"
@@ -50,13 +48,12 @@ func (s *Server) setupAuthorization() {
 		auth.Create, auth.Read, auth.Update, auth.Delete)
 	s.authz.AddPermission(savingDeposits.ADMIN, savingDeposits.DEPOSITS,
 		auth.Create, auth.Read, auth.Update, auth.Delete)
-	//s.authz.AddPermission("realtor", "savingss",
-	//	auth.Create, auth.Read, auth.Update, auth.Delete)
-	//s.authz.AddPermission("client", "savingss", auth.Read)
+	s.authz.AddPermission(savingDeposits.REGULAR, savingDeposits.DEPOSITS,
+		auth.Create, auth.Read, auth.Update, auth.Delete)
 }
 
 // Creates GET, POST, PATH and DELETE user handlers.
-func (s *Server) AddDepositsHandler(basePath string) {
+func (s *Server) AddDepositsHandlers(basePath string) {
 	url := "/" + basePath
 	urlWithId := url + "/{id:[0-9]+}"
 
@@ -81,196 +78,6 @@ func (s *Server) AddUsersHandlers(basePath string) {
 	s.router.HandleFunc(urlWithId, deleteUsersHandler(s.userService)).Methods("DELETE")
 }
 
-func getUsersHandler(service savingDeposits.UserService) func(http.ResponseWriter, *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		var input savingDeposits.UserReadInput
-
-		input.Id = vars["id"]
-		result, err := service.Read(input)
-		if err != nil {
-			badRequestError(err, w)
-			return
-		}
-
-		respond(w, http.StatusOK, result)
-	}
-}
-
-func getAllUsersHandler(service savingDeposits.UserService) func(http.ResponseWriter, *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var input savingDeposits.UserAllInput
-
-		result, err := service.All(input)
-		if err != nil {
-			respond(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		respond(w, http.StatusOK, result)
-	}
-}
-
-func postUsersHandler(service savingDeposits.UserService) func(http.ResponseWriter, *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
-		var newUser savingDeposits.UserCreateInput
-		if err := json.NewDecoder(r.Body).Decode(&newUser); err != nil {
-			respond(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		result, err := service.Create(newUser)
-		if err != nil {
-			badRequestError(err, w)
-			return
-		}
-
-		respond(w, http.StatusCreated, result)
-	}
-}
-
-func patchUsersHandler(service savingDeposits.UserService) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		defer r.Body.Close()
-
-		var updateInput savingDeposits.UserUpdateInput
-
-		if err := json.NewDecoder(r.Body).Decode(&updateInput); err != nil {
-			respond(w, http.StatusBadRequest, err.Error())
-			log.Println(err.Error())
-			return
-		}
-
-		updateInput.Id = vars["id"]
-		result, err := service.Update(updateInput)
-		if err != nil {
-			badRequestError(err, w)
-			return
-		}
-
-		respond(w, http.StatusOK, result)
-	}
-}
-
-func deleteUsersHandler(service savingDeposits.UserService) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-
-		var deleteIn savingDeposits.UserDeleteInput
-		deleteIn.Id = vars["id"]
-
-		_, err := service.Delete(deleteIn)
-		if err != nil {
-			badRequestError(err, w)
-			return
-		}
-
-		respond(w, http.StatusNoContent, nil)
-	}
-}
-
-func getSavingsHandler(srv savingDeposits.DepositsService) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		var input savingDeposits.DepositReadInput
-		input.Id = vars["id"]
-
-		result, err := srv.Read(input)
-		if err != nil {
-			badRequestError(err, w)
-			return
-		}
-
-		respond(w, http.StatusOK, result)
-	}
-}
-
-func getAllSavingsHandler(srv savingDeposits.DepositsService) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var input savingDeposits.DepositFindInput
-		//input.Query = r.URL.RawQuery
-
-		result, err := srv.Find(input)
-		if err != nil {
-			respond(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		respond(w, http.StatusOK, result)
-	}
-}
-
-func postSavingsHandler(srv savingDeposits.DepositsService) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
-		var newSavings savingDeposits.SavingDeposit
-		if err := json.NewDecoder(r.Body).Decode(&newSavings); err != nil {
-			respond(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		result, err := srv.Create(savingDeposits.DespositCreateInput{SavingDeposit: newSavings})
-		if err != nil {
-			badRequestError(err, w)
-			return
-		}
-
-		respond(w, http.StatusCreated, result)
-	}
-}
-
-func patchSavingsHandler(srv savingDeposits.DepositsService) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		defer r.Body.Close()
-
-		var updateInput savingDeposits.DepositUpdateInput
-
-		if err := json.NewDecoder(r.Body).Decode(&updateInput.Data); err != nil {
-			respond(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		updateInput.Id = vars["id"]
-
-		result, err := srv.Update(updateInput)
-		if err != nil {
-			badRequestError(err, w)
-			return
-		}
-
-		respond(w, http.StatusOK, result)
-	}
-}
-
-func deleteSavingsHandler(srv savingDeposits.DepositsService) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var deleteIn savingDeposits.DepositDeleteInput
-
-		vars := mux.Vars(r)
-		deleteIn.Id = vars["id"]
-		_, err := srv.Delete(deleteIn)
-		if err != nil {
-			badRequestError(err, w)
-			return
-		}
-
-		respond(w, http.StatusNoContent, nil)
-	}
-}
-
-func badRequestError(err error, w http.ResponseWriter) {
-	log.Printf("[ERROR] %s", err.Error())
-	switch err {
-	case savingDeposits.NotFoundError:
-		respond(w, http.StatusNotFound, err.Error())
-	default:
-		respond(w, http.StatusBadRequest, err.Error())
-	}
-}
-
 func NewServer(db *gorm.DB, authNService auth.AuthnService, authZService *auth.AuthzService,
 	depositsService savingDeposits.DepositsService, userService savingDeposits.UserService) (*Server, error) {
 	router := mux.NewRouter()
@@ -289,7 +96,7 @@ func NewServer(db *gorm.DB, authNService auth.AuthnService, authZService *auth.A
 
 	// Adds POST, GET, PATCH, DELETE for deposits
 	fmt.Println("Adding deposit handlers")
-	s.AddDepositsHandler("deposits")
+	s.AddDepositsHandlers("deposits")
 
 	// Add other handlers
 	router.HandleFunc("/login", s.LoginHandler()).Methods("POST")

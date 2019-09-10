@@ -39,7 +39,7 @@ type SavingDeposit struct {
 
 	// Realtor associated with this SavingDeposit
 	Owner   User `json:"-" gorm:"foreignkey:OwnerId"`
-	OnwerId uint `json:"ownerId"`
+	OwnerId uint `json:"ownerId"`
 }
 
 func (uid) UnmarshalJSON([]byte) error {
@@ -119,6 +119,9 @@ func isFraction(n float64) bool {
 
 type DespositCreateInput struct {
 	SavingDeposit
+
+	// Auth user
+	User User
 }
 
 type DepositCreateOutput struct {
@@ -128,6 +131,9 @@ type DepositCreateOutput struct {
 type DepositReadInput struct {
 	// ID to lookup the SavingDeposit
 	Id string
+
+	// Auth user
+	User User
 }
 
 type DepositReadOutput struct {
@@ -136,6 +142,9 @@ type DepositReadOutput struct {
 
 type DepositFindInput struct {
 	Query string
+
+	// Auth user
+	User User
 }
 
 type DepositFindOutput struct {
@@ -149,6 +158,9 @@ func (o *DepositFindOutput) Public() interface{} {
 type DepositUpdateInput struct {
 	Id   string
 	Data map[string]interface{}
+
+	// Auth user
+	User User
 }
 
 type DepositUpdateOutput struct {
@@ -157,6 +169,9 @@ type DepositUpdateOutput struct {
 
 type DepositDeleteInput struct {
 	Id string
+
+	// Auth user
+	User User
 }
 
 type DepositDeleteOutput struct {

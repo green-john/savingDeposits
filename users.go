@@ -77,7 +77,7 @@ type UserSession struct {
 	// Generated token
 	Token string
 
-	// User associated to this session
+	// AuthUser associated to this session
 	UserID uint
 	User   User
 }

@@ -2,6 +2,11 @@ package e2e
 
 import (
 	"encoding/json"
+	"github.com/jinzhu/gorm"
+	"savingDeposits"
+	"savingDeposits/postgres"
+	"time"
+
 	//"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -181,48 +186,62 @@ func TestCRUDApartment(t *testing.T) {
 	})
 }
 
-//func TestReadAllApartmentsAndSearch(t *testing.T) {
-//	var wg sync.WaitGroup
-//	const addr = "localhost:8083"
-//	srv, clean := newServer(t)
-//	defer clean()
+func TestCreateAndReadApartmentsWithRegularUser(t *testing.T) {
+	var wg sync.WaitGroup
+	const addr = "localhost:8083"
+	srv, clean := newServer(t)
+	defer clean()
+
+	serverUrl := fmt.Sprintf("http://%s", addr)
+
+	wg.Add(1)
+	startServer(wg, addr, srv)
+
+	regularId, err := createUser("regular", "regular", "regular", srv.Db)
+	tst.Ok(t, err)
+	adminId, err := createUser("admin", "admin", "admin", srv.Db)
+	tst.Ok(t, err)
+
+	adminDepositsIds := createNDeposits(t, 2, adminId, srv.Db)
+	regularDepositIds := createNDeposits(t, 2, regularId, srv.Db)
+
+	t.Run("Regular permissions are okay", func(t *testing.T) {
+		token, err := getUserToken(t, serverUrl, "regular", "regular")
+		tst.Ok(t, err)
+
+		// Get only regular's deposits
+		res, err := tst.MakeRequest("GET", serverUrl+"/deposits", token, []byte(""))
+		tst.Ok(t, err)
+
+		tst.True(t, res.StatusCode == http.StatusOK,
+			fmt.Sprintf("Expected 200, got %d", res.StatusCode))
+
+		var returnedDeposits []depositResponse
+		rawData, err := ioutil.ReadAll(res.Body)
+		tst.Ok(t, err)
+		err = json.Unmarshal(rawData, &returnedDeposits)
+		tst.Ok(t, err)
+
+		tst.True(t, len(returnedDeposits) == 2,
+			fmt.Sprintf("Expected 2 deposits, got %d", len(returnedDeposits)))
+
+		adminDepositUrl := fmt.Sprintf("%s/deposits/%d", serverUrl, adminDepositsIds[0])
+		regularDepositUrl := fmt.Sprintf("%s/deposits/%d", serverUrl, regularDepositIds[0])
+
+		res, err = tst.MakeRequest("DELETE", adminDepositUrl, token, []byte(""))
+		tst.Ok(t, err)
+		tst.True(t, res.StatusCode == http.StatusForbidden, "Expected 403, got %d", res.StatusCode)
+
+		res, err = tst.MakeRequest("DELETE", regularDepositUrl, token, []byte(""))
+		tst.Ok(t, err)
+		tst.True(t, res.StatusCode == http.StatusNoContent, "Expected 204, got %d", res.StatusCode)
+		res, err = tst.MakeRequest("GET", regularDepositUrl, token, []byte(""))
+		tst.Ok(t, err)
+		tst.True(t, res.StatusCode == http.StatusNotFound, "Expected 404, got %d", res.StatusCode)
+	})
+}
+
 //
-//	serverUrl := fmt.Sprintf("http://%s", addr)
-//
-//	wg.Add(1)
-//	startServer(wg, addr, srv)
-//
-//	_, err := createUser("admin", "admin", "admin", srv.Db)
-//	tst.Ok(t, err)
-//	realtorId, err := createUser("realtor", "realtor", "realtor", srv.Db)
-//	tst.Ok(t, err)
-//	_, err = createUser("client", "client", "client", srv.Db)
-//	tst.Ok(t, err)
-//
-//	create10Apartments(t, realtorId, srv.Db)
-//
-//	t.Run("Read all apartments client, realtor, admin, success", func(t *testing.T) {
-//		for _, user := range []string{"client", "realtor", "admin"} {
-//			token, err := getUserToken(t, serverUrl, user, user)
-//			tst.Ok(t, err)
-//
-//			// Act
-//			res, err := tst.MakeRequest("GET", serverUrl+"/apartments", token, []byte(""))
-//			tst.Ok(t, err)
-//
-//			// True
-//			tst.True(t, res.StatusCode == http.StatusOK,
-//				fmt.Sprintf("Expected 200, got %d", res.StatusCode))
-//
-//			var returnedApartments []apartmentResponse
-//			decoder := json.NewDecoder(res.Body)
-//			err = decoder.Decode(&returnedApartments)
-//			tst.Ok(t, err)
-//
-//			tst.True(t, len(returnedApartments) == 10,
-//				fmt.Sprintf("Expected 10 apartments, got %d", len(returnedApartments)))
-//		}
-//	})
 //
 //	t.Run("Search apartments by room count", func(t *testing.T) {
 //		token, err := getUserToken(t, serverUrl, "client", "client")
@@ -259,42 +278,60 @@ func newDepositPayload(bankName, accountNumber string, ownerId uint) []byte {
 "ownerId": %d}`, bankName, accountNumber, ownerId))
 }
 
-//
-//func create10Apartments(t *testing.T, realtorId uint, db *gorm.DB) {
-//	for i := 0; i < 5; i++ {
-//		name := fmt.Sprintf("apt%d", i)
-//		desc := fmt.Sprintf("desc%d", i)
-//		_, err := createApartment(name, desc, 2, realtorId, db)
-//		tst.Ok(t, err)
-//	}
-//
-//	for i := 0; i < 5; i++ {
-//		name := fmt.Sprintf("apt%d", 5+i)
-//		desc := fmt.Sprintf("desc%d", 5+i)
-//		_, err := createApartment(name, desc, 4, realtorId, db)
-//		tst.Ok(t, err)
-//	}
-//}
-//
-//func createApartment(name, desc string, roomCount int, realtorId uint, db *gorm.DB) (uint, error) {
-//	apartmentResource := postgres.NewDbApartmentService(db)
-//
-//	output, err := apartmentResource.Create(
-//		savingDeposits.ApartmentCreateInput{
-//			Apartment: savingDeposits.Apartment{
-//				Name:             name,
-//				Desc:             desc,
-//				RoomCount:        roomCount,
-//				PricePerMonthUsd: 500.0,
-//				Latitude:         41.761536,
-//				Longitude:        12.315237,
-//				RealtorId:        realtorId,
-//				Available:        true,
-//			},
-//		})
-//	if err != nil {
-//		return 0, err
-//	}
-//
-//	return uint(output.ID), nil
-//}
+func createNDeposits(t *testing.T, n int, ownerId uint, db *gorm.DB) []uint {
+	allIds := make([]uint, 0, 0)
+	for i := 0; i < n; i++ {
+		name := fmt.Sprintf("BNK%d", i)
+		endDate := fmt.Sprintf("2019-04-%02d", 10+i)
+		id, err := createDeposit(name, float64(i+100), endDate, ownerId, db)
+
+		allIds = append(allIds, id)
+		tst.Ok(t, err)
+	}
+
+	return allIds
+}
+
+func parseDate(s string) (savingDeposits.Date, error) {
+	t, err := time.Parse(savingDeposits.DateFormat, s)
+	if err != nil {
+		return savingDeposits.Date{}, err
+	}
+
+	return savingDeposits.Date(t), nil
+
+}
+
+func createDeposit(bankName string, initialAmount float64, endDate string, ownerId uint, db *gorm.DB) (uint, error) {
+	depositsService := postgres.NewDbSavingDepositService(db)
+
+	strStartDate, err := parseDate("2000-04-20")
+	if err != nil {
+		return 0, err
+	}
+	strEndDate, err := parseDate(endDate)
+
+	if err != nil {
+		return 0, err
+	}
+
+	output, err := depositsService.Create(
+		savingDeposits.DespositCreateInput{
+			SavingDeposit: savingDeposits.SavingDeposit{
+				BankName:       bankName,
+				AccountNumber:  "no" + bankName,
+				InitialAmount:  initialAmount,
+				YearlyInterest: .3,
+				YearlyTax:      .3,
+				StartDate:      strStartDate,
+				EndDate:        strEndDate,
+				OwnerId:        ownerId,
+			},
+		})
+
+	if err != nil {
+		return 0, err
+	}
+
+	return uint(output.ID), nil
+}

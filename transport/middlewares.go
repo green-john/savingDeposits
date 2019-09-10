@@ -1,6 +1,7 @@
 package transport
 
 import (
+	"context"
 	"fmt"
 	"github.com/gorilla/handlers"
 	"net/http"
@@ -49,7 +50,8 @@ func (s *Server) AuthMiddleware(next http.Handler) http.Handler {
 			}
 		}
 
-		next.ServeHTTP(w, r)
+		ctx := context.WithValue(r.Context(), "authUser", user)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 

@@ -296,7 +296,7 @@
             save() {
                 if (this.editedIndex > -1) {
                     const depositToUpdate = this.deposits[this.editedIndex];
-                    $deposits.updateDeposit(depositToUpdate.id, this.editedDeposit).then(res => {
+                    $deposits.updateDeposit(depositToUpdate.id, this.editedDeposit).then(() => {
                             alert(`Deposit updated`);
                             this.getAllDeposits();
                             this.close();
@@ -306,8 +306,7 @@
                     });
                 } else {
                     console.log(this.editedDeposit);
-                    $deposits.createDeposit(this.editedDeposit).then(
-                        _ => {
+                    $deposits.createDeposit(this.editedDeposit).then(() => {
                             alert(`Deposit created`);
                             this.getAllDeposits();
                             this.close();
