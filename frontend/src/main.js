@@ -7,6 +7,7 @@ import Login from './components/Login';
 import NewAccount from './components/NewAccount';
 import Dashboard from './components/Dashboard';
 import UserDashboard from './components/UsersDashboard';
+import Report from './components/Report';
 
 Vue.use(VueRouter);
 Vue.use(vuetify);
@@ -28,8 +29,9 @@ const router = new VueRouter({
     routes: [
         {path: '/login', component: Login},
         {path: '/new', component: NewAccount},
-        {path: '/users', component: UserDashboard},
         {path: '/dashboard', component: Dashboard, alias: '/', beforeEnter: requireAuth},
+        {path: '/users', component: UserDashboard, beforeEnter: requireAuth},
+        {path: '/report', component: Report, beforeEnter: requireAuth},
         {
             path: '/logout', beforeEnter(to, from, next) {
                 $auth.logout();

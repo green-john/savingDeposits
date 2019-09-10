@@ -61,7 +61,10 @@ owned records, a user manager would be able to CRUD users, and an admin would be
 - A saving deposit is identified by a bank name, account number, an initial amount saved (currency in USD), start date, end date, interest percentage per year and taxes percentage.
 - The interest could be positive or negative. The taxes are only applied over profit.
 - User can filter saving deposits by the amount (minimum and maximum), bank name and date.
-- User can generate a revenue report for a given period, that will show the gains and losses from interest and taxes for each deposit. The amount should be green or red if respectively it represents a gain or loss. The report should show the sum of profits and losses at the bottom for that period. 
+- User can generate a revenue report for a given period, that will show the gains and losses
+from interest and taxes for each deposit. The amount should be green or red if respectively
+it represents a gain or loss. The report should show the sum of profits and losses at the bottom
+for that period. 
 - The computation of profit/loss is done on a daily basis. Consider that a year is 360 days. 
 - REST API. Make it possible to perform all user actions via the API, including authentication (If a mobile application and you don’t know how to create your own backend you can use Firebase.com or similar services to create the API).
 - In any case, you should be able to explain how a REST API works and demonstrate that by creating functional tests that use the REST Layer directly. Please be prepared to use REST clients like Postman, cURL, etc. for this purpose.
@@ -81,8 +84,12 @@ places where routes are added. (Almost done)
 
 ## Next actions:
 
-- Frontend to CRUD deposits.
-- Backend/Frontend to search deposits
-- Backend/Frontend for report
-- Figure out Table for users.
+- ~Frontend to CRUD deposits.~
+- ~Frontend to search deposits~
+- Frontend for report.
+- Backend search.
+- Backend report.
+- Fix rates to be any number not just decimal
+- Vselect for users.
+- Fix permissions for getting deposits for a user.
 

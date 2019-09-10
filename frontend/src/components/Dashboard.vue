@@ -118,7 +118,7 @@
                 </v-row>
 
                 <v-row no-gutters class="ml-6 mt-4">
-                    <v-col sm="4" md="3">
+                    <v-col>
                         <v-container>
                             <v-row no-gutters>
                                 <v-col class="accountNumber">Account: {{deposit.accountNumber}}</v-col>
@@ -128,7 +128,7 @@
                             </v-row>
                             <v-row no-gutters>
                                 <v-col>
-                                    <label class="initialAmount">Amount: ${{ deposit.initialAmount }}</label>
+                                    <label class="amount">Amount: ${{ deposit.initialAmount }}</label>
                                     <label class="interest pl-4">{{ deposit.yearlyInterest }}%▲</label>
                                     <label class="tax pl-4">{{ deposit.yearlyTax }}%▼</label>
                                 </v-col>
@@ -344,7 +344,7 @@
         text-transform: uppercase;
     }
 
-    .initialAmount {
+    .amount {
         color: gray;
         font-size: small;
     }
