@@ -21,12 +21,12 @@ type Public interface {
 }
 
 type Server struct {
-	Db              *gorm.DB
-	router          *mux.Router
-	authn           auth.AuthnService
-	authz           *auth.AuthzService
-	DepositsService savingDeposits.DepositsService
-	userService     savingDeposits.UserService
+	Db             *gorm.DB
+	router         *mux.Router
+	authn          auth.AuthnService
+	authz          *auth.AuthzService
+	depositService savingDeposits.DepositsService
+	userService    savingDeposits.UserService
 }
 
 // Creates an http server and serves it in the specified address
@@ -59,11 +59,11 @@ func (s *Server) AddDepositsHandlers(basePath string) {
 
 	fmt.Println(url, urlWithId)
 
-	s.router.HandleFunc(url, postDepositsHandler(s.DepositsService)).Methods("POST")
-	s.router.HandleFunc(url, getAllDepositsHandler(s.DepositsService)).Methods("GET")
-	s.router.HandleFunc(urlWithId, getDepositsHandler(s.DepositsService)).Methods("GET")
-	s.router.HandleFunc(urlWithId, patchDepositsHandler(s.DepositsService)).Methods("PATCH")
-	s.router.HandleFunc(urlWithId, deleteDepositsHandler(s.DepositsService)).Methods("DELETE")
+	s.router.HandleFunc(url, postDepositsHandler(s.depositService)).Methods("POST")
+	s.router.HandleFunc(url, getAllDepositsHandler(s.depositService)).Methods("GET")
+	s.router.HandleFunc(urlWithId, getDepositsHandler(s.depositService)).Methods("GET")
+	s.router.HandleFunc(urlWithId, patchDepositsHandler(s.depositService)).Methods("PATCH")
+	s.router.HandleFunc(urlWithId, deleteDepositsHandler(s.depositService)).Methods("DELETE")
 }
 
 // Creates GET, POST, PATH and DELETE user handlers.
@@ -78,17 +78,18 @@ func (s *Server) AddUsersHandlers(basePath string) {
 	s.router.HandleFunc(urlWithId, deleteUsersHandler(s.userService)).Methods("DELETE")
 }
 
+
 func NewServer(db *gorm.DB, authNService auth.AuthnService, authZService *auth.AuthzService,
 	depositsService savingDeposits.DepositsService, userService savingDeposits.UserService) (*Server, error) {
 	router := mux.NewRouter()
 
 	s := &Server{
-		Db:              db,
-		router:          router,
-		authn:           authNService,
-		authz:           authZService,
-		DepositsService: depositsService,
-		userService:     userService,
+		Db:             db,
+		router:         router,
+		authn:          authNService,
+		authz:          authZService,
+		depositService: depositsService,
+		userService:    userService,
 	}
 
 	// Adds POST, GET, PATCH, DELETE for users
@@ -99,9 +100,10 @@ func NewServer(db *gorm.DB, authNService auth.AuthnService, authZService *auth.A
 	s.AddDepositsHandlers("deposits")
 
 	// Add other handlers
-	router.HandleFunc("/login", s.LoginHandler()).Methods("POST")
+	router.HandleFunc("/login", s.loginHandler()).Methods("POST")
 	router.HandleFunc("/profile", s.profileHandler()).Methods("GET")
 	router.HandleFunc("/newClient", s.newClientHandler()).Methods("POST")
+	router.HandleFunc("/report", s.generateReportHandler()).Methods("GET")
 
 	// Add Authentication/Authorization middleware
 	router.Use(s.AuthMiddleware)

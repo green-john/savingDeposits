@@ -1,5 +1,5 @@
 <template>
-    <v-container>
+    <div>
         <v-toolbar flat v-if="loggedIn">
             <v-toolbar-title>Report</v-toolbar-title>
             <v-divider
@@ -75,14 +75,17 @@
                     <v-col>
                         <v-container>
                             <v-row no-gutters>
-                                <v-col class="amount">Earnings: ${{deposit.initialAmount}}</v-col>
+                                <v-col class="amount">Earnings: ${{deposit.totalRevenue}}</v-col>
                             </v-row>
                             <v-row no-gutters>
-                                <v-col class="amount">Tax Paid: ${{deposit.initialAmount}}</v-col>
+                                <v-col class="amount">Tax Paid: ${{deposit.totalTax}}</v-col>
                             </v-row>
                             <v-row no-gutters>
-                                <v-col v-bind:class="{earned: positiveBalance(deposit)}">Total:
-                                    ${{deposit.initialAmount}}
+                                <v-col v-bind:class="{
+                                earned: positiveBalance(deposit.totalProfit),
+                                paid: negativeBalance(deposit.totalProfit)
+                                }">Total:
+                                    ${{deposit.totalProfit}}
                                 </v-col>
                             </v-row>
                         </v-container>
@@ -91,7 +94,7 @@
             </v-card>
         </v-container>
 
-    </v-container>
+    </div>
 </template>
 
 
@@ -99,6 +102,7 @@
     import DatePicker from "./helpers/DatePicker";
     import $auth from "./auth";
     import $deposits from './deposits';
+    import {handleError} from './http';
 
     export default {
         name: 'Dashboard',
@@ -113,10 +117,6 @@
             }
         },
 
-        created() {
-            this.getAllDeposits();
-        },
-
         computed: {
             loggedIn() {
                 return $auth.isLoggedIn();
@@ -126,7 +126,7 @@
                 let total = 0;
                 for (let deposit of this.deposits) {
                     // TODO fix this with the correct value
-                    total += deposit.initialAmount;
+                    total += deposit.totalProfit;
                 }
 
                 return total;
@@ -134,21 +134,19 @@
         },
 
         methods: {
-            positiveBalance(deposit) {
-                return deposit > 0;
+            positiveBalance(balance) {
+                return balance > 0;
+            },
+
+            negativeBalance(balance) {
+                return balance < 0;
             },
 
             getReport() {
-                return true;
-            },
-
-            getAllDeposits() {
-                $deposits.loadAllDeposits({}).then(res => {
-                    console.log(res);
+                $deposits.getReport(this.startDate, this.EndDate).then(res => {
                     this.deposits = res;
-                    console.log(this.deposits);
                 }).catch(err => {
-                    alert(err);
+                    handleError(err);
                 });
             },
         },

@@ -20,7 +20,8 @@ func True(t *testing.T, expr bool, errorMsg string, fmtArgs... interface{}) {
 	t.Helper()
 
 	if !expr {
-		t.Errorf(errorMsg, fmtArgs...)
+		//t.Errorf(errorMsg, fmtArgs...)
+		t.Fatalf(errorMsg, fmtArgs...)
 	}
 }
 

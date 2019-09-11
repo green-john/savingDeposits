@@ -4,6 +4,7 @@ import (
 	libErrors "errors"
 	"fmt"
 	"github.com/jinzhu/gorm"
+	"math"
 	"net/url"
 	"reflect"
 	"savingDeposits"
@@ -105,24 +106,6 @@ func (ar *dbSavingsDepositService) Find(input savingDeposits.DepositFindInput) (
 	return &savingDeposits.DepositFindOutput{Deposits: deposits}, nil
 }
 
-func amountGreaterThan(tx *gorm.DB, strAmount string) (*gorm.DB, error) {
-	amount, err := strconv.ParseFloat(strAmount, 64)
-	if err != nil {
-		return nil, err
-	}
-
-	return tx.Where("initial_amount >= ?", amount), nil
-}
-
-func amountLessThan(tx *gorm.DB, strAmount string) (*gorm.DB, error) {
-	amount, err := strconv.ParseFloat(strAmount, 64)
-	if err != nil {
-		return nil, err
-	}
-
-	return tx.Where("initial_amount <= ?", amount), nil
-}
-
 func (ar *dbSavingsDepositService) Update(input savingDeposits.DepositUpdateInput) (*savingDeposits.DepositUpdateOutput, error) {
 	deposit, err := getSavingDeposit(input.Id, ar.Db)
 	if err != nil {
@@ -156,6 +139,69 @@ func (ar *dbSavingsDepositService) Delete(input savingDeposits.DepositDeleteInpu
 
 	ar.Db.Delete(&deposit)
 	return &savingDeposits.DepositDeleteOutput{Message: "success"}, nil
+}
+
+func (ar *dbSavingsDepositService) GenerateReport(input savingDeposits.GenerateReportInput) (*savingDeposits.GenerateReportOutput, error) {
+	values, err := url.ParseQuery(input.Query)
+	if err != nil {
+		return nil, err
+	}
+
+	tx := ar.Db.New()
+
+	if strStartDate, ok := values["startDate"]; ok {
+		tx, err = dateGreaterThan(tx, "start_date", strStartDate[0])
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if strEndDate, ok := values["endDate"]; ok {
+		tx, err = dateLessThan(tx, "end_date", strEndDate[0])
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	user := input.User
+	if user.Role != "admin" {
+		tx = tx.Where("owner_id = ?", user.ID)
+	}
+
+	var deposits []savingDeposits.SavingDeposit
+	tx.Find(&deposits)
+
+	response := make([]savingDeposits.ReportEntry, 0, 0)
+	for _, d := range deposits {
+		revenue := calculateRevenue(d)
+		tax := revenue * d.YearlyTax
+
+		response = append(response, savingDeposits.ReportEntry{
+			SavingDeposit: d,
+			TotalRevenue:  trimDecimals(revenue),
+			TotalTax:      trimDecimals(tax),
+			TotalProfit:   trimDecimals(revenue - tax),
+		})
+	}
+
+	return &savingDeposits.GenerateReportOutput{Deposits: response}, nil
+}
+
+// Trims f to 3 decimal places
+func trimDecimals(f float64) float64 {
+	return math.Round(f * 10000) / 10000
+}
+
+func calculateRevenue(d savingDeposits.SavingDeposit) float64 {
+	startDate := time.Time(d.StartDate)
+	endDate := time.Time(d.EndDate)
+
+	totalDays := int(endDate.Sub(startDate).Hours() / 24)
+	profitPerDay := d.YearlyInterest / 360
+
+	totalProfit := d.InitialAmount * float64(totalDays) * profitPerDay
+
+	return totalProfit
 }
 
 func canPerformAction(user savingDeposits.User, deposit *savingDeposits.SavingDeposit) bool {

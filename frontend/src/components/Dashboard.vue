@@ -158,19 +158,7 @@
     import $auth from "./auth";
     import $deposits from './deposits';
     import $users from "./users";
-
-    function handleError(err) {
-        if (err.response) {
-            console.log(err.response.status);
-            alert(`[ERROR] ${err.response.data}`);
-        } else if (err.request) {
-            alert(`[ERROR] ${err.request}`);
-        } else {
-            alert(`[ERROR] ${err.message}`);
-        }
-
-        console.log(err.config);
-    }
+    import {handleError} from "./http";
 
     export default {
         name: 'Dashboard',
@@ -241,19 +229,18 @@
         },
 
         created() {
-            this.getAllDeposits({});
+            this.getAllDeposits();
             this.getUserInfo();
             this.tryLoadingAllUsers();
         },
 
         methods: {
             getAllDeposits(filters) {
+                filters = filters || {};
                 $deposits.loadAllDeposits(filters).then(res => {
-                    console.log(res);
                     this.deposits = res;
-                    console.log(this.deposits);
                 }).catch(err => {
-                    alert(err);
+                    handleError(err);
                 });
             },
 
@@ -261,7 +248,7 @@
                 $auth.getUserInfo().then(res => {
                     this.userData = res.data;
                 }).catch(err => {
-                    alert(err);
+                    handleError(err);
                 })
             },
 
@@ -300,7 +287,9 @@
                         handleError(err);
                     });
                 } else {
-                    console.log(this.editedDeposit);
+                    if (this.userData.role !== "admin") {
+                        this.editedDeposit.ownerId = this.userData.id;
+                    }
                     $deposits.createDeposit(this.editedDeposit).then(() => {
                             alert(`Deposit created`);
                             this.getAllDeposits();
@@ -316,7 +305,7 @@
                 $deposits.deleteDeposit(depositId).then(() => {
                     this.getAllDeposits();
                 }).catch(err => {
-                    alert(err)
+                    handleError(err)
                 });
             },
 
@@ -325,7 +314,7 @@
             },
 
             resetData() {
-                this.getAllDeposits({});
+                this.getAllDeposits();
             },
         },
     }

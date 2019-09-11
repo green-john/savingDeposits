@@ -30,27 +30,17 @@ export default {
                 headers: {Authorization: $auth.getToken()}
             }
         ).then(response => {
-            console.log('loadAll');
-            console.log(response);
             return response.data;
-        }).catch(err => {
-            throw err;
-        })
+        });
     },
 
     createDeposit(depositData) {
-        console.log('create');
-        console.log(depositData);
-        // depositData.startDate = dateToStr(depositData.startDate);
-        // depositData.endDate = dateToStr(depositData.endDate);
 
         return $http.post('/deposits', depositData, {
             headers: {Authorization: $auth.getToken()}
         }).then(response => {
             return response.data;
-        }).catch(err => {
-            throw err;
-        })
+        });
     },
 
     deleteDeposit(depositId) {
@@ -58,21 +48,32 @@ export default {
             headers: {Authorization: $auth.getToken()}
         }).then(res => {
             return res.data;
-        }).catch(err => {
-            throw err;
         });
     },
 
     updateDeposit(id, newData) {
-        console.log('update');
-        console.log(newData);
-
         return $http.patch('/deposits/' + newData.id, newData, {
             headers: {Authorization: $auth.getToken()}
         }).then(response => {
             return response.data;
-        }).catch(err => {
-            throw err;
-        })
+        });
+    },
+
+    getReport(startDate, endDate) {
+        let finalUrl = "/report?";
+
+        if (startDate) {
+            finalUrl += `startDate=${startDate}&`;
+        }
+
+        if (endDate) {
+            finalUrl += `endDate=${endDate}&`;
+        }
+
+        return $http.get(finalUrl, {
+            headers: {Authorization: $auth.getToken()}
+        }).then(res => {
+            return res.data;
+        });
     }
 }

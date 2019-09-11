@@ -1,10 +1,9 @@
 package e2e
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/jinzhu/gorm"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"savingDeposits"
 	"savingDeposits/postgres"
@@ -114,10 +113,8 @@ func TestCRUDUsers(t *testing.T) {
 			res, err := tst.MakeRequest("POST", serverUrl+"/users", token, payload)
 			tst.Ok(t, err)
 			tst.True(t, res.StatusCode == http.StatusCreated, fmt.Sprintf("Expected 201 got %d", res.StatusCode))
-			rawContent, err := ioutil.ReadAll(res.Body)
-			tst.Ok(t, err)
 
-			usrRes := assertResponse(t, rawContent, "john", "regular", func(id uint) bool {
+			usrRes := assertResponse(t, res.Body, "john", "regular", func(id uint) bool {
 				return id != 0
 			})
 
@@ -126,11 +123,9 @@ func TestCRUDUsers(t *testing.T) {
 			res, err = tst.MakeRequest("GET", userUrl, token, payload)
 			tst.Ok(t, err)
 			tst.True(t, res.StatusCode == http.StatusOK, fmt.Sprintf("Expected 200 got %d", res.StatusCode))
-			rawContent, err = ioutil.ReadAll(res.Body)
-			tst.Ok(t, err)
 
 			var retUser userResponse
-			err = json.Unmarshal(rawContent, &retUser)
+			err = readJson(res.Body, &retUser)
 			tst.True(t, retUser.Username == usrRes.Username,
 				fmt.Sprintf("Expected name %s, got %s", usrRes.Username, retUser.Username))
 			tst.True(t, retUser.Role == usrRes.Role,
@@ -143,11 +138,9 @@ func TestCRUDUsers(t *testing.T) {
 			res, err = tst.MakeRequest("PATCH", userUrl, token, updatePayload)
 			tst.Ok(t, err)
 			tst.True(t, res.StatusCode == http.StatusOK, fmt.Sprintf("Expected 200 got %d", res.StatusCode))
-			rawContent, err = ioutil.ReadAll(res.Body)
-			tst.Ok(t, err)
 
 			var updUser userResponse
-			err = json.Unmarshal(rawContent, &updUser)
+			err = readJson(res.Body, &updUser)
 			tst.True(t, updUser.Username == "john",
 				fmt.Sprintf("Expected name john, got %s", updUser.Username))
 			tst.True(t, updUser.Role == "manager",
@@ -170,9 +163,9 @@ func TestCRUDUsers(t *testing.T) {
 
 }
 
-func assertResponse(t *testing.T, data []byte, user, role string, checkId func(id uint) bool) userResponse {
+func assertResponse(t *testing.T, data io.Reader, user, role string, checkId func(id uint) bool) userResponse {
 	var usrRes userResponse
-	err := json.Unmarshal(data, &usrRes)
+	err := readJson(data, &usrRes)
 	tst.Ok(t, err)
 
 	tst.True(t, usrRes.Username == user,
@@ -231,8 +224,7 @@ func TestFetchOwnUserData(t *testing.T) {
 				fmt.Sprintf("Expected 200, got %d", res.StatusCode))
 
 			var returnedUser savingDeposits.User
-			decoder := json.NewDecoder(res.Body)
-			err = decoder.Decode(&returnedUser)
+			err = readJson(res.Body, &returnedUser)
 			tst.Ok(t, err)
 
 			assertUser(t, &returnedUser, user, user)
@@ -265,8 +257,7 @@ func TestCreateClient(t *testing.T) {
 			fmt.Sprintf("Expected 201, got %d", res.StatusCode))
 
 		var returnedUser savingDeposits.User
-		decoder := json.NewDecoder(res.Body)
-		err = decoder.Decode(&returnedUser)
+		err = readJson(res.Body, &returnedUser)
 		tst.Ok(t, err)
 
 		assertUser(t, &returnedUser, "client1", "regular")

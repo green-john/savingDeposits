@@ -3,7 +3,6 @@ package savingDeposits
 import (
 	"database/sql/driver"
 	"errors"
-	"math"
 	"strings"
 	"time"
 )
@@ -93,10 +92,6 @@ func (s *SavingDeposit) Validate() error {
 		allErrors += "Yearly tax should be positive and between [0.0, 1.0]"
 	}
 
-	if !isFraction(math.Abs(s.YearlyInterest)) {
-		allErrors += "Yearly interest should be between [-1.0, 1.0]"
-	}
-
 	startDate := time.Time(s.StartDate)
 	endDate := time.Time(s.EndDate)
 
@@ -178,10 +173,40 @@ type DepositDeleteOutput struct {
 	Message string
 }
 
+type GenerateReportInput struct {
+	Query string
+
+	// Auth user
+	User User
+}
+
+type ReportEntry struct {
+	SavingDeposit
+
+	// Profit for the requested period
+	TotalRevenue float64 `json:"totalRevenue"`
+
+	// Taxes paid for the requested period
+	TotalTax float64 `json:"totalTax"`
+
+	// Profit for the requested period
+	TotalProfit float64 `json:"totalProfit"`
+}
+
+type GenerateReportOutput struct {
+	Deposits []ReportEntry
+}
+
+func (o *GenerateReportOutput) Public() interface{} {
+	return o.Deposits
+}
+
 type DepositsService interface {
 	Create(DepositCreateInput) (*DepositCreateOutput, error)
 	Read(DepositReadInput) (*DepositReadOutput, error)
 	Find(DepositFindInput) (*DepositFindOutput, error)
 	Update(DepositUpdateInput) (*DepositUpdateOutput, error)
 	Delete(DepositDeleteInput) (*DepositDeleteOutput, error)
+
+	GenerateReport(input GenerateReportInput) (*GenerateReportOutput, error)
 }

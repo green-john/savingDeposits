@@ -1,17 +1,7 @@
 package e2e
 
 import (
-	"encoding/json"
-	"github.com/jinzhu/gorm"
-	"savingDeposits"
-	"savingDeposits/postgres"
-	"time"
-
-	//"encoding/json"
 	"fmt"
-	"io/ioutil"
-
-	//"io/ioutil"
 	"net/http"
 	"savingDeposits/tst"
 	"sync"
@@ -112,11 +102,8 @@ func TestCRUDDeposits(t *testing.T) {
 		tst.Ok(t, err)
 
 		tst.True(t, res.StatusCode == http.StatusCreated, fmt.Sprintf("Expected 201 got %d", res.StatusCode))
-		rawContent, err := ioutil.ReadAll(res.Body)
-		tst.Ok(t, err)
-
 		var createdDeposit depositResponse
-		err = json.Unmarshal(rawContent, &createdDeposit)
+		err = readJson(res.Body, &createdDeposit)
 
 		tst.True(t, createdDeposit.ID >= 1, "Expected id greater than 0")
 		tst.True(t, createdDeposit.BankName == "Bank", "Got different bank name")
@@ -135,11 +122,8 @@ func TestCRUDDeposits(t *testing.T) {
 		tst.True(t, res.StatusCode == http.StatusOK,
 			fmt.Sprintf("Expected 200, got %d", res.StatusCode))
 
-		rawContent, err = ioutil.ReadAll(res.Body)
-		tst.Ok(t, err)
-
 		var retrievedDeposit depositResponse
-		err = json.Unmarshal(rawContent, &retrievedDeposit)
+		err = readJson(res.Body, &retrievedDeposit)
 		tst.Ok(t, err)
 
 		tst.True(t, retrievedDeposit.ID == createdDeposit.ID, fmt.Sprintf("Unexpected id %d",
@@ -155,11 +139,9 @@ func TestCRUDDeposits(t *testing.T) {
 
 		res, err = tst.MakeRequest("GET", depositUrl, token, []byte(""))
 		tst.Ok(t, err)
-		rawContent, err = ioutil.ReadAll(res.Body)
-		tst.Ok(t, err)
 
 		var updatedDeposit depositResponse
-		err = json.Unmarshal(rawContent, &updatedDeposit)
+		err = readJson(res.Body, &updatedDeposit)
 		tst.Ok(t, err)
 		tst.True(t, updatedDeposit.ID == retrievedDeposit.ID,
 			"Expected id to be %d, got %d", updatedDeposit.ID, retrievedDeposit.ID)
@@ -217,9 +199,7 @@ func TestCreateAndReadDepositsWithRegularUser(t *testing.T) {
 			fmt.Sprintf("Expected 200, got %d", res.StatusCode))
 
 		var returnedDeposits []depositResponse
-		rawData, err := ioutil.ReadAll(res.Body)
-		tst.Ok(t, err)
-		err = json.Unmarshal(rawData, &returnedDeposits)
+		err = readJson(res.Body, &returnedDeposits)
 		tst.Ok(t, err)
 
 		tst.True(t, len(returnedDeposits) == 2,
@@ -239,101 +219,4 @@ func TestCreateAndReadDepositsWithRegularUser(t *testing.T) {
 		tst.Ok(t, err)
 		tst.True(t, res.StatusCode == http.StatusNotFound, "Expected 404, got %d", res.StatusCode)
 	})
-}
-
-//
-//
-//	t.Run("Search apartments by room count", func(t *testing.T) {
-//		token, err := getUserToken(t, serverUrl, "client", "client")
-//		tst.Ok(t, err)
-//
-//		// Act
-//		res, err := tst.MakeRequest("GET", serverUrl+"/apartments?roomCount=4", token, []byte(""))
-//		tst.Ok(t, err)
-//
-//		// True
-//		tst.True(t, res.StatusCode == http.StatusOK,
-//			fmt.Sprintf("Expected 200, got %d", res.StatusCode))
-//
-//		var returnedApartments []apartmentResponse
-//		decoder := json.NewDecoder(res.Body)
-//		err = decoder.Decode(&returnedApartments)
-//		tst.Ok(t, err)
-//
-//		tst.True(t, len(returnedApartments) == 5,
-//			fmt.Sprintf("Expected 5 apartments, got %d", len(returnedApartments)))
-//	})
-//}
-//
-func newDepositPayload(bankName, accountNumber string, ownerId uint) []byte {
-	return []byte(fmt.Sprintf(
-		`{
-"bankName":"%s",
-"accountNumber": "%s",
-"initialAmount": 50.0,
-"yearlyInterest": 0.5,
-"yearlyTax": 0.5,
-"startDate": "2018-04-20",
-"endDate": "2018-04-21",
-"ownerId": %d}`, bankName, accountNumber, ownerId))
-}
-
-func createNDeposits(t *testing.T, n int, ownerId uint, db *gorm.DB) []uint {
-	allIds := make([]uint, 0, 0)
-	for i := 0; i < n; i++ {
-		name := fmt.Sprintf("BNK%d", i)
-		endDate := fmt.Sprintf("2019-04-%02d", 10+i)
-		id, err := createDeposit(name, float64(i+100), endDate, ownerId, db)
-
-		allIds = append(allIds, id)
-		tst.Ok(t, err)
-	}
-
-	return allIds
-}
-
-func parseDate(s string) (savingDeposits.Date, error) {
-	t, err := time.Parse(savingDeposits.DateFormat, s)
-	if err != nil {
-		return savingDeposits.Date{}, err
-	}
-
-	return savingDeposits.Date(t), nil
-
-}
-
-func createDeposit(bankName string, initialAmount float64, endDate string, ownerId uint, db *gorm.DB) (uint, error) {
-	depositsService := postgres.NewDbSavingDepositService(db)
-
-	strStartDate, err := parseDate("2000-04-20")
-	if err != nil {
-		return 0, err
-	}
-	strEndDate, err := parseDate(endDate)
-
-	if err != nil {
-		return 0, err
-	}
-
-	output, err := depositsService.Create(
-		savingDeposits.DepositCreateInput{
-			SavingDeposit: savingDeposits.SavingDeposit{
-				BankName:       bankName,
-				AccountNumber:  "no" + bankName,
-				InitialAmount:  initialAmount,
-				YearlyInterest: .3,
-				YearlyTax:      .3,
-				StartDate:      strStartDate,
-				EndDate:        strEndDate,
-				OwnerId:        ownerId,
-			},
-
-			User: savingDeposits.User{Role: "admin"},
-		})
-
-	if err != nil {
-		return 0, err
-	}
-
-	return uint(output.ID), nil
 }

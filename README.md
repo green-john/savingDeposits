@@ -89,9 +89,9 @@ places where routes are added. (Almost done)
 - ~Frontend for report.~
 - ~Backend search.~
 - ~Fix permissions for getting deposits for a user.~
+- ~Fix rates to be any number not just decimal~
+- Think about interest properly
 - Backend report.
-- Fix rates to be any number not just decimal
 - Vselect for users.
 - Display owner for admins
-
-
+- Improve user creation.
