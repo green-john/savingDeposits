@@ -10,7 +10,7 @@
         <template v-slot:activator="{ on }">
             <v-text-field
                     v-model="date"
-                    label="End Date"
+                    :label="label"
                     prepend-icon="mdi-calendar"
                     readonly
                     v-on="on"
@@ -27,6 +27,7 @@
         name: "DatePicker",
         props: {
             value: String,
+            label: String,
         },
 
         data() {

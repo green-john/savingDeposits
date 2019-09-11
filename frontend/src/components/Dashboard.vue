@@ -57,10 +57,10 @@
                                                   label="Initial amount" type="number"></v-text-field>
                                 </v-col>
                                 <v-col cols="12" sm="6" md="4">
-                                    <DatePicker v-model="editedDeposit.startDate"></DatePicker>
+                                    <DatePicker label="Start Date" v-model="editedDeposit.startDate"></DatePicker>
                                 </v-col>
                                 <v-col cols="12" sm="6" md="4">
-                                    <DatePicker v-model="editedDeposit.endDate"></DatePicker>
+                                    <DatePicker label="End Date" v-model="editedDeposit.endDate"></DatePicker>
                                 </v-col>
                                 <v-col cols="12" sm="6" md="4">
                                     <v-text-field v-model.number="editedDeposit.yearlyInterest"
@@ -88,15 +88,15 @@
         <v-container class="pa-0 ml-5 mt-3">
             <v-row align="center" no-gutters>
                 <v-col cols="2">
-                    <v-text-field v-model.number="filters.minAmount"
+                    <v-text-field class="ml-2" v-model.number="filters.minAmount"
                                   label="Min Amount" type="number"></v-text-field>
                 </v-col>
                 <v-col cols="2">
-                    <v-text-field v-model.number="filters.maxAmount"
+                    <v-text-field class="ml-2" v-model.number="filters.maxAmount"
                                   label="Max Amount" type="number"></v-text-field>
                 </v-col>
                 <v-col cols="2">
-                    <v-text-field v-model="filters.bankName"
+                    <v-text-field class="ml-2" v-model="filters.bankName"
                                   label="Bank Name"></v-text-field>
                 </v-col>
                 <v-col cols="2">
@@ -222,7 +222,7 @@
             },
 
             fromTitle() {
-                return this.editedIndex === -1 ? "New User" : "Edit User";
+                return this.editedIndex === -1 ? "New Deposit" : "Edit Deposit";
             },
         },
 
