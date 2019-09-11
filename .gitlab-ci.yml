@@ -4,7 +4,7 @@ services:
   - postgres:latest
 
 variables:
-  POSTGRES_DB: rentals-dev
+  POSTGRES_DB: savings-test
   POSTGRES_USER: juan
   RENTALS_DB_NAME: $POSTGRES_DB
   RENTALS_DB_USER: $POSTGRES_USER
@@ -27,14 +27,14 @@ test:
   script:
     - go test ./...
 
-deploy:
-  stage: deploy
-  only:
-    - master
-
-  script:
-    - apt-get update -qy
-    - apt-get install -y ruby-dev rubygems git
-    - gem install dpl
-    - echo "deploying"
-    - dpl --skip-cleanup --provider=heroku --app=trenlas --api-key=$API_KEY
+#deploy:
+#  stage: deploy
+#  only:
+#    - master
+#
+#  script:
+#    - apt-get update -qy
+#    - apt-get install -y ruby-dev rubygems git
+#    - gem install dpl
+#    - echo "deploying"
+#    - dpl --skip-cleanup --provider=heroku --app=trenlas --api-key=$API_KEY
