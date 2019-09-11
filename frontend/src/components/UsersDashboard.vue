@@ -46,10 +46,11 @@
                                         <v-text-field v-model="editedUser.username" label="Username"></v-text-field>
                                     </v-col>
                                     <v-col cols="12" sm="6" md="4">
-                                        <v-text-field v-model="editedUser.role" label="Role"></v-text-field>
+                                        <v-select v-model="editedUser.role" :items="['regular', 'manager', 'admin']"
+                                                  label="Role"></v-select>
                                     </v-col>
                                     <v-col cols="12" sm="6" md="4">
-                                        <v-text-field v-model="editedUser.password" label="Password"></v-text-field>
+                                        <v-text-field type="password" v-model="editedUser.password" label="Password"></v-text-field>
                                     </v-col>
                                 </v-row>
                             </v-container>
@@ -70,13 +71,13 @@
                     class="mr-2"
                     @click="editItem(item)"
             >
-                edit
+                mdi-pencil
             </v-icon>
             <v-icon
                     small
                     @click="deleteItem(item)"
             >
-                delete
+                mdi-delete
             </v-icon>
         </template>
     </v-data-table>

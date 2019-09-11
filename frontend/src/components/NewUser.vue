@@ -10,20 +10,28 @@
                         <v-flex xs12 sm12 md12>
                             <v-text-field
                                     label="Name"
-                                    hint="Name of the user"
+                                    hint="Name of asdjfl;aksdjfkaldjf"
                                     v-model.trim="newUserData.name"
                                     persistent-hint
                                     required>
                             </v-text-field>
                         </v-flex>
                         <v-flex xs12 sm12 md12>
-                            <v-text-field
+                            <v-select
                                     label="Role"
-                                    hint="User's role"
-                                    v-model.trim="newUserData.role"
-                                    persistent-hint
-                                    required>
-                            </v-text-field>
+                                    v-model="newUserData.role"
+                                    :items="userRoles"
+                                    required
+                            >
+                            </v-select>
+
+                            <!--                            <v-text-field-->
+                            <!--                                    label="Role"-->
+                            <!--                                    hint="User's role"-->
+                            <!--                                    v-model.trim="newUserData.role"-->
+                            <!--                                    persistent-hint-->
+                            <!--                                    required>-->
+                            <!--                            </v-text-field>-->
                         </v-flex>
                         <v-flex xs12 sm12 md12>
                             <v-text-field
@@ -69,6 +77,7 @@
         data() {
             return {
                 newUserMessage: null,
+                userRoles: ['regular', 'manager', 'admin'],
 
                 newUserData: {
                     name: null,

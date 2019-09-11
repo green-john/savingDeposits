@@ -90,8 +90,11 @@ places where routes are added. (Almost done)
 - ~Backend search.~
 - ~Fix permissions for getting deposits for a user.~
 - ~Fix rates to be any number not just decimal~
-- Think about interest properly
-- Backend report.
-- Vselect for users.
+- ~Fix interest properly~
+- ~Backend report.~
+- ~Vselect for users.~
+- ~Improve user creation.~
+- ~Show icons.~
+- Select ownerId when creating deposit (use v-select).
 - Display owner for admins
-- Improve user creation.
+- Use enter in forms.

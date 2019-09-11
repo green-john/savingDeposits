@@ -14,7 +14,7 @@ type reportEntry struct {
 	AccountNumber  string  `json:"accountNumber"`
 	InitialAmount  float64 `json:"initialAmount"`
 	YearlyInterest float64 `json:"yearlyInterest"`
-	YearlyTax      float64 `json:"yearlyTax"`
+	YearlyTax      float64 `json:"tax"`
 	StartDate      string  `json:"startDate"`
 	EndDate        string  `json:"endDate"`
 	TotalRevenue   float64 `json:"totalRevenue"`

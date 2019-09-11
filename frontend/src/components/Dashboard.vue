@@ -64,11 +64,13 @@
                                 </v-col>
                                 <v-col cols="12" sm="6" md="4">
                                     <v-text-field v-model.number="editedDeposit.yearlyInterest"
-                                                  label="Yearly Interest" type="number"></v-text-field>
+                                                  label="Yearly Interest" type="number"
+                                                  hint="Use percentage (e.g. 5 for 5%)"></v-text-field>
                                 </v-col>
                                 <v-col cols="12" sm="6" md="4">
-                                    <v-text-field v-model.number="editedDeposit.yearlyTax"
-                                                  label="Yearly Tax" type="number"></v-text-field>
+                                    <v-text-field v-model.number="editedDeposit.tax"
+                                                  label="Tax" type="number"
+                                                  hint="Use percentage (e.g. 5 for 5%)"></v-text-field>
                                 </v-col>
                             </v-row>
                         </v-container>
@@ -105,7 +107,9 @@
                 </v-col>
 
                 <v-col cols="1">
-                    <v-btn class="mb-2 ml-2" @click="filterData()">Filter</v-btn>
+                    <v-btn class="mb-2 ml-2" @click="filterData()">
+                        <v-icon>mdi-filter</v-icon>
+                    </v-btn>
                 </v-col>
 
                 <v-col cols="1">
@@ -134,7 +138,7 @@
                                 <v-col>
                                     <label class="amount">Amount: ${{ deposit.initialAmount }}</label>
                                     <label class="interest pl-4">{{ deposit.yearlyInterest }}%▲</label>
-                                    <label class="tax pl-4">{{ deposit.yearlyTax }}%▼</label>
+                                    <label class="tax pl-4">{{ deposit.tax }}%▼</label>
                                 </v-col>
                             </v-row>
                         </v-container>
@@ -181,7 +185,7 @@
                     accountNumber: '',
                     initialAmount: 0.0,
                     yearlyInterest: 0.0,
-                    yearlyTax: 0.0,
+                    tax: 0.0,
                     startDate: null,
                     endDate: null,
                     ownerId: 1,
@@ -200,7 +204,7 @@
                     accountNumber: '',
                     initialAmount: 0.0,
                     yearlyInterest: 0.0,
-                    yearlyTax: 0.0,
+                    tax: 0.0,
                     startDate: new Date(2018, 4, 20).toISOString().substr(0, 10),
                     endDate: new Date(2018, 4, 21).toISOString().substr(0, 10),
                     ownerId: 1,

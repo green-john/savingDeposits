@@ -28,7 +28,7 @@ type SavingDeposit struct {
 	YearlyInterest float64 `json:"yearlyInterest"`
 
 	// Yearly taxes
-	YearlyTax float64 `json:"yearlyTax"`
+	Tax float64 `json:"tax"`
 
 	// Date added
 	StartDate Date `gorm:"type:date" json:"startDate"`
@@ -88,7 +88,7 @@ func (s *SavingDeposit) Validate() error {
 		allErrors += "Initial amount must be greater than 0\n"
 	}
 
-	if !isFraction(s.YearlyTax) {
+	if !isFraction(s.Tax) {
 		allErrors += "Yearly tax should be positive and between [0.0, 1.0]"
 	}
 

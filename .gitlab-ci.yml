@@ -6,9 +6,9 @@ services:
 variables:
   POSTGRES_DB: savings-test
   POSTGRES_USER: juan
-  RENTALS_DB_NAME: $POSTGRES_DB
-  RENTALS_DB_USER: $POSTGRES_USER
-  RENTALS_DB_HOST: postgres
+  SAVINGS_DB_NAME: $POSTGRES_DB
+  SAVINGS_DB_USER: $POSTGRES_USER
+  SAVINGS_DB_HOST: postgres
 
 stages:
   - build

@@ -3,13 +3,12 @@ import $auth from "./auth";
 
 export default {
     createClientAccount(username, password) {
-        return $http.post('/newClient', {username, password}).then(
-            res => {
-                return res.data || [];
-            }
-        ).catch(err => {
-            throw err;
-        });
+        return $http.post('/newClient', {username, password})
+            .then(res => {
+                console.log('created user');
+                console.log(res);
+                return res.data;
+            });
     },
 
     createUser(username, password, role) {

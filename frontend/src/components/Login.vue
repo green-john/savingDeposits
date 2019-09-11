@@ -1,11 +1,25 @@
 <template>
     <div class="wrapper">
         <h2>Login</h2>
-        <form @submit.prevent="login" class="login">
-            <input placeholder="username" v-model="username" type="text">
-            <input placeholder="password" v-model="password" type="password">
-            <input type="submit" value="Login">
-        </form>
+        <v-container>
+            <v-row no-gutters>
+                <v-col>
+                    <v-text-field v-model="username"
+                                  label="Username"></v-text-field>
+                </v-col>
+            </v-row>
+            <v-row no-gutters>
+                <v-col>
+                    <v-text-field v-model="password" type="password"
+                                  label="Password"></v-text-field>
+                </v-col>
+            </v-row>
+            <v-row no-gutters>
+                <v-col>
+                    <v-btn color="primary" @click="login()">Login</v-btn>
+                </v-col>
+            </v-row>
+        </v-container>
         <div>Don have an account?
             <router-link to="/new">Create one</router-link>
         </div>
@@ -59,9 +73,5 @@
     .login > * {
         font-size: 1rem;
         height: 2rem;
-    }
-
-    .error {
-        color: red;
     }
 </style>

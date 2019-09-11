@@ -168,7 +168,7 @@ func newDepositPayload(amount float64, bankName string, rawStartDate, rawEndDate
 			BankName:       bankName,
 			AccountNumber:  accountNumber,
 			InitialAmount:  amount,
-			YearlyTax:      .3,
+			Tax:            .3,
 			YearlyInterest: .3,
 			StartDate:      savingDeposits.Date(startDate),
 			EndDate:        savingDeposits.Date(endDate),

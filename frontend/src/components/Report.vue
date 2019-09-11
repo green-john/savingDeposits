@@ -15,6 +15,14 @@
                     inset
                     vertical
             ></v-divider>
+            <v-toolbar-title v-if="isAdmin">
+                <router-link to="/users">Users</router-link>
+            </v-toolbar-title>
+            <v-divider v-if="isAdmin"
+                       class="mx-4"
+                       inset
+                       vertical
+            ></v-divider>
             <v-toolbar-title>
                 <router-link to="/logout">Log out</router-link>
             </v-toolbar-title>
@@ -66,7 +74,7 @@
                                 <v-col>
                                     <label class="amount">Initial Amount: ${{ deposit.initialAmount }}</label>
                                     <label class="earned pl-4">{{ deposit.yearlyInterest }}%▲</label>
-                                    <label class="paid pl-4">{{ deposit.yearlyTax }}%▼</label>
+                                    <label class="paid pl-4">{{ deposit.tax }}%▼</label>
                                 </v-col>
                             </v-row>
                         </v-container>
@@ -110,11 +118,18 @@
         data() {
             return {
                 deposits: [],
-                users: [],
+                userData: {},
 
                 startDate: "",
                 endDate: "",
             }
+        },
+
+        created() {
+             $auth.getUserInfo().then(res => {
+                 this.userData = res.data;
+                 console.log(this.userData);
+             });
         },
 
         computed: {
@@ -122,10 +137,13 @@
                 return $auth.isLoggedIn();
             },
 
+            isAdmin() {
+                return this.userData.role === "admin";
+            },
+
             totalEarned() {
                 let total = 0;
                 for (let deposit of this.deposits) {
-                    // TODO fix this with the correct value
                     total += deposit.totalProfit;
                 }
 

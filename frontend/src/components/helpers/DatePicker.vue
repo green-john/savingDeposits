@@ -11,7 +11,7 @@
             <v-text-field
                     v-model="date"
                     label="End Date"
-                    prepend-icon="event"
+                    prepend-icon="mdi-calendar"
                     readonly
                     v-on="on"
             ></v-text-field>

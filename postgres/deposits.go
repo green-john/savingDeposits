@@ -174,7 +174,7 @@ func (ar *dbSavingsDepositService) GenerateReport(input savingDeposits.GenerateR
 	response := make([]savingDeposits.ReportEntry, 0, 0)
 	for _, d := range deposits {
 		revenue := calculateRevenue(d)
-		tax := revenue * d.YearlyTax
+		tax := revenue * d.Tax
 
 		response = append(response, savingDeposits.ReportEntry{
 			SavingDeposit: d,
@@ -248,8 +248,8 @@ func updateFields(deposit *savingDeposits.SavingDeposit, data map[string]interfa
 		deposit.YearlyInterest = v.(float64)
 	}
 
-	if v, ok := data["yearlyTax"]; ok {
-		deposit.YearlyTax = v.(float64)
+	if v, ok := data["tax"]; ok {
+		deposit.Tax = v.(float64)
 	}
 
 	if v, ok := data["startDate"]; ok {
