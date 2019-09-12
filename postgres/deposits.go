@@ -176,6 +176,10 @@ func (ar *dbSavingsDepositService) GenerateReport(input savingDeposits.GenerateR
 		revenue := calculateRevenue(d)
 		tax := revenue * d.Tax
 
+		if revenue <= 0 {
+			tax = 0
+		}
+
 		response = append(response, savingDeposits.ReportEntry{
 			SavingDeposit: d,
 			TotalRevenue:  trimDecimals(revenue),
@@ -189,7 +193,7 @@ func (ar *dbSavingsDepositService) GenerateReport(input savingDeposits.GenerateR
 
 // Trims f to 3 decimal places
 func trimDecimals(f float64) float64 {
-	return math.Round(f * 10000) / 10000
+	return math.Round(f*10000) / 10000
 }
 
 func calculateRevenue(d savingDeposits.SavingDeposit) float64 {
