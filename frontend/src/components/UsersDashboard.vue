@@ -154,7 +154,6 @@
 
             getAllUsers() {
                 $users.getAllUsers().then(res => {
-                    console.log(res);
                     this.assignIncomingUsers(res);
                 });
             },
@@ -162,7 +161,6 @@
             editItem(item) {
                 this.editedIndex = this.users.indexOf(item);
                 this.editedUser = Object.assign({}, item);
-                console.log(this.editedUser);
                 this.dialog = true;
             },
 
@@ -187,7 +185,6 @@
             save() {
                 if (this.editedIndex > -1) {
                     const userToUpdate = this.users[this.editedIndex];
-                    console.log(userToUpdate);
 
                     $users.updateUser(userToUpdate.id, this.editedUser.username, this.editedUser.password,
                         this.editedUser.role).then(res => {

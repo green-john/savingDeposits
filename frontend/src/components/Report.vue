@@ -36,10 +36,10 @@
         <v-container class="pa-0 ml-5 mt-3">
             <v-row align="center" no-gutters>
                 <v-col cols="3">
-                    <DatePicker v-model="startDate"></DatePicker>
+                    <DatePicker label="Start Date" v-model="startDate"></DatePicker>
                 </v-col>
                 <v-col cols="3">
-                    <DatePicker v-model="endDate"></DatePicker>
+                    <DatePicker label="End Date" v-model="endDate"></DatePicker>
                 </v-col>
 
                 <v-col cols="3">

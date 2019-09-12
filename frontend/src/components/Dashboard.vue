@@ -15,10 +15,10 @@
                     inset
                     vertical
             ></v-divider>
-            <v-toolbar-title v-if="isAdmin">
+            <v-toolbar-title v-if="isAdminOrManager">
                 <router-link to="/users">Users</router-link>
             </v-toolbar-title>
-            <v-divider v-if="isAdmin"
+            <v-divider v-if="isAdminOrManager"
                        class="mx-4"
                        inset
                        vertical
@@ -205,8 +205,8 @@
                     initialAmount: 0.0,
                     yearlyInterest: 0.0,
                     tax: 0.0,
-                    startDate: new Date(2018, 4, 20).toISOString().substr(0, 10),
-                    endDate: new Date(2018, 4, 21).toISOString().substr(0, 10),
+                    startDate: null,
+                    endDate: null,
                     ownerId: 1,
                 },
             }
@@ -217,8 +217,8 @@
                 return $auth.isLoggedIn();
             },
 
-            isAdmin() {
-                return this.userData.role === "admin";
+            isAdminOrManager() {
+                return this.userData.role === "admin" || this.userData.role === "manager";
             },
 
             fromTitle() {
@@ -244,7 +244,11 @@
                 $deposits.loadAllDeposits(filters).then(res => {
                     this.deposits = res;
                 }).catch(err => {
-                    handleError(err);
+                    if (this.userData.role === "admin") {
+                        handleError(err);
+                    }
+
+                    // This error is expected
                 });
             },
 
@@ -266,16 +270,14 @@
 
             close() {
                 this.showModal = false;
-                setTimeout(() => {
-                    this.editedDeposit = Object.assign({}, this.defaultDeposit);
-                    this.editedIndex = -1;
-                }, 300)
+                console.log("closing");
+                this.editedDeposit = Object.assign({}, this.defaultDeposit);
+                this.editedIndex = -1;
             },
 
             editDeposit(deposit) {
                 this.editedIndex = this.deposits.indexOf(deposit);
                 this.editedDeposit = Object.assign({}, deposit);
-                console.log(this.editedDeposit);
                 this.showModal = true;
             },
 
