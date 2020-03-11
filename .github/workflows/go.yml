@@ -30,6 +30,7 @@ jobs:
       with:
         postgresql db: 'savings-test'
         postgresql user: 'juan'
+        postgresql password: 'root'
 
     - name: Test
       run: go test ./...
@@ -37,3 +38,4 @@ jobs:
         SAVINGS_DB_NAME: savings-test
         SAVINGS_DB_USER: juan
         SAVINGS_DB_HOST: localhost
+        SAVINGS_DB_PASSWORD: root
